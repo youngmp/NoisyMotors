@@ -170,8 +170,9 @@ class NoisyMotors(object):
         #print(t,U)
         if callable(U):
             Uval = U(t)
-        elif (U is float) or (U is int):
+        elif isinstance(U,float) or isinstance(U,int):
             Uval = U
+            
         elif U == 'dynamic':
             
             # only used in euler method.
@@ -197,15 +198,13 @@ class NoisyMotors(object):
             # update velocity
             #Uval = self.update_velocity(f_up,f_down,Uval)
             
-            
             print(Uval)
-            
-
+        
         if self.ivp_method == 'euler' and self.use_storage:
             self.U_arr[self.i] = Uval
             
-        else:
-            raise ValueError("Unrecognized option for velocity,"+str(U))
+        #else:
+        #    raise ValueError("Unrecognized option for velocity, "+str(self.ivp_method)+" "+str(type(self.ivp_method)))
         
         if Uval > 0:
             # boundaries

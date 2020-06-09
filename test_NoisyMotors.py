@@ -29,7 +29,6 @@ if not(os.path.exists(DIR_TESTS)):
     os.makedirs(DIR_TESTS)
 
 
-
 def test_conservation(CFL=0.5,Nlist=10**np.arange(2,5,1),**kwargs):
     """
     conservation number should be constant over time.
@@ -320,7 +319,6 @@ def run_U_fixed_ss(**kwargs):
     ax11.set_xlim(a.A-pad,a.B+pad)
     ax12.set_xlim(a.A-pad,a.B+pad)
 
-
     ax11.legend()
     ax12.legend()
     
@@ -570,8 +568,8 @@ def fn_test(t,om=15):
 def main():
     
     # Tests where ground truth is known. set if True to run.
-    if False:
-        # CONSERVATION CHECK
+    if True:
+        # CONSERVATION CHECK with Gaussian init
         kwargs = {'U':100, 'A0':0, 'A':0, 'B':0.5,
                   'T':0.002,'beta':0,
                   'ivp_method':'euler','use_storage':True,
@@ -579,7 +577,7 @@ def main():
         
         test_conservation(Nlist=5**np.arange(2,5,1),**kwargs)
         
-        # FLUX CHECK 
+        # FLUX CHECK with Gaussian init
         kwargs = {'U':200, 'A0':0, 'A':0, 'B':0.5,
                   'T':0.002,'beta':0,
                   'ivp_method':'euler','use_storage':True,
@@ -587,15 +585,14 @@ def main():
         
         test_flux(Nlist=5**np.arange(2,5,1),**kwargs)
         
-        # FULL CHECK SS (U>0)
+        # FULL CHECK SS with source (U>0) 
         kwargs = {'U':100, 'A0':4.95, 'A':5, 'B':5.5,
                   'T':0.1,'beta':126,
                   'ivp_method':'euler','use_storage':False}
         
         test_U_fixed_ss(Nlist=5**np.arange(2,5,1),**kwargs)
     
-        
-        # FULL CHECK SS (U<0)
+        # FULL CHECK SS with source (U<0)
         kwargs = {'U':-100, 'A0':-10, 'A':5, 'B':5.5,
                   'T':0.1,'beta':126,
                   'ivp_method':'euler','use_storage':False}
@@ -611,7 +608,7 @@ def main():
         
     # Tests where ground truth is not known
     
-    if True:
+    if False:
         # VARIABLE (EXOGENOUS) VELOCITY CHECK
         # FULL CHECK (U<0)
         kwargs = {'U':fn_test, 'A0':-2, 'A':5, 'B':5.5,
@@ -629,8 +626,9 @@ def main():
         test_U_variable(**kwargs)
     
     if False:
-        # VELOCITY UPDATE CHECK
-        # FULL CHECK (U<0)
+        # RV POSITION CHECK
+        # NOT YET IMPLEMENTED.
+        
         kwargs = {'U':'dynamic', 'A0':-2, 'A':5, 'B':5.5,
                   'T':.01,'beta':126,'alpha':14,'N':200,
                   'ivp_method':'euler','use_storage':True}

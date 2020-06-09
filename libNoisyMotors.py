@@ -90,7 +90,7 @@ def ground_truth(obj):
         obj.part_idxs = obj.idx_full[obj.A_idx:obj.B_idx+1]
 
     obj.ground_truth = np.zeros_like(obj.x)
-    obj.ground_truth[obj.part_idxs] = phi(obj)
+    obj.ground_truth[obj.part_idxs] = phi(obj.x[obj.part_idxs],obj.U,obj)
     
     return obj.ground_truth
     
