@@ -1,8 +1,8 @@
 # NoisyMotors
 
 
-NoisyMotors.py includes the PDE of the population distribution.
-libNoisyMotors.py is a library file for NoisyMotors, to help readability.
+MotorPDE.py includes the PDE of the population distribution.
+libMotorPDE.py is a library file for MotorPDE, to help readability.
 
 Master.py is the master equation formulation.
 
