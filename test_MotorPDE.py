@@ -125,7 +125,7 @@ def run_conservation(show=False,**kwargs):
     ax22.set_title('final-(true)')
 
     #ax11.set_xlabel('x index')
-    ax11.set_xlabel('t index')
+    ax11.set_xlabel('x index')
     ax12.set_xlabel('x index')
 
     ax11.legend()
@@ -226,14 +226,32 @@ def run_flux(show=False,**kwargs):
     #print(a.sol[0,0])
     flux = a.U*(a.sol[:,-1] - a.sol[:,0])
     cumulative_flux = np.cumsum(flux[:-1])*a.dt
+    mass = np.sum(a.sol,axis=1)[1:]*a.dx
     
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(cumulative_flux)
+    fig = plt.figure(figsize=(10,5))
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+
+    ax1.plot(cumulative_flux+mass,label='cumulative flux PDE + mass PDE')
+    ax1.plot(cumulative_flux,label='cumulative flux PDE')
+    ax1.plot(mass,label='mass PDE')
+    #ax1.plot(true_flux,label='cumulative flux true')
+
+    #ax2.plot(np.abs(cumulative_flux-true_flux),label='diff')
+    ax2.plot(np.diff(cumulative_flux+mass),label='d/dt(cumulative flux pde)')
+    
+    
+    ax1.set_xlabel('t index')
+    ax2.set_xlabel('t index')
+    
+    ax1.set_ylabel('cumulative flux + mass')
+    ax2.set_ylabel('derivative')
+    
     
     fname = DIR_TESTS+'flux_'+lib.fname_suffix(ftype='.png',**kwargs)
     #print('*\t saving plot to ',fname)
     
+    plt.tight_layout
     plt.savefig(fname)
     
     if show:
@@ -241,7 +259,7 @@ def run_flux(show=False,**kwargs):
     
     plt.close()
     
-    return cumulative_flux
+    return cumulative_flux+mass
 
 
 def test_U_fixed_ss(CFL=0.5,Nlist=10**np.arange(2,5,1),**kwargs):
@@ -305,8 +323,8 @@ def run_U_fixed_ss(**kwargs):
     ax12.plot(a.x,a.sol[-1,:],label='pde')
     ax12.plot(a.x,ground_truth_values,label='ground truth')
     
-    ax12.scatter(a.A_idx,0,label='x=A index')
-    ax11.scatter(a.A_idx,0,label='x=A index')
+    ax12.scatter(a.x[a.A_idx],0,label='x=A index')
+    ax11.scatter(a.x[a.A_idx],0,label='x=A index')
     
     ax12.set_title('final')
     ax11.set_title('final-(true)')
@@ -316,8 +334,8 @@ def run_U_fixed_ss(**kwargs):
     ax12.set_xlabel('x')
     
     pad = (a.B-a.A)/10
-    ax11.set_xlim(a.A-pad,a.B+pad)
-    ax12.set_xlim(a.A-pad,a.B+pad)
+    #ax11.set_xlim(a.A-pad,a.B+pad)
+    #ax12.set_xlim(a.A-pad,a.B+pad)
 
     ax11.legend()
     ax12.legend()
@@ -567,37 +585,48 @@ def fn_test(t,om=15):
 
 def main():
     
+    quick_test = True
+    
+    if quick_test:
+        # for fast debugging
+        Nlist = 5**np.arange(2,5,1)
+    else:
+        # test to machine epsilon
+        Nlist = 10**np.arange(2,5,1)
+    
     # Tests where ground truth is known. set if True to run.
     if True:
         # CONSERVATION CHECK with Gaussian init
         kwargs = {'U':100, 'A0':0, 'A':0, 'B':0.5,
-                  'T':0.002,'beta':0,
+                  'T':0.0001,'beta':0,
                   'ivp_method':'euler','use_storage':True,
                   'source':False,'init_pars':{'type':'gaussian','pars':0.01}}
         
-        test_conservation(Nlist=5**np.arange(2,5,1),**kwargs)
+        test_conservation(Nlist=Nlist,**kwargs)
         
+    if False:
         # FLUX CHECK with Gaussian init
-        kwargs = {'U':200, 'A0':0, 'A':0, 'B':0.5,
-                  'T':0.002,'beta':0,
+        kwargs = {'U':10, 'A0':0, 'A':0, 'B':0.01,
+                  'T':0.001,'beta':0,
                   'ivp_method':'euler','use_storage':True,
-                  'source':False,'init_pars':{'type':'gaussian','pars':0.01}}
+                  'source':False,'init_pars':{'type':'gaussian','pars':0.0001}}
+        test_flux(Nlist=Nlist,**kwargs)
         
-        test_flux(Nlist=5**np.arange(2,5,1),**kwargs)
         
+    if False:
         # FULL CHECK SS with source (U>0) 
         kwargs = {'U':100, 'A0':4.95, 'A':5, 'B':5.5,
                   'T':0.1,'beta':126,
                   'ivp_method':'euler','use_storage':False}
         
-        test_U_fixed_ss(Nlist=5**np.arange(2,5,1),**kwargs)
+        test_U_fixed_ss(Nlist=Nlist,**kwargs)
     
         # FULL CHECK SS with source (U<0)
         kwargs = {'U':-100, 'A0':-10, 'A':5, 'B':5.5,
                   'T':0.1,'beta':126,
                   'ivp_method':'euler','use_storage':False}
         
-        test_U_fixed_ss(Nlist=5**np.arange(2,5,1),**kwargs)
+        test_U_fixed_ss(Nlist=Nlist,**kwargs)
     
         # FULL CHECK DYNAMIC + FIXED VELOCITY
         kwargs = {'U':-100, 'A0':-10, 'A':5, 'B':5.5,
