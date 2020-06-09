@@ -15,6 +15,7 @@ import matplotlib
 import numpy as np
 
 from scipy.integrate import solve_ivp
+from scipy.interpolate import interp1d
 
 import libNoisyMotors as lib
 
@@ -30,6 +31,7 @@ class NoisyMotors(object):
                     'U':None,
                     'alpha':14,
                     'beta':126,
+                    'zeta':1,
                     'A0':-1,
                     'A':5,
                     'B':5.5,
@@ -103,18 +105,19 @@ class NoisyMotors(object):
         """
 
         if not(self.use_storage) and self.ivp_method == 'euler':
-            self.t = np.array([0])
-            self.sol = np.zeros((1,self.N))
+            TN = 1
         else:
-            self.t = np.linspace(0,self.T,self.TN)
-            self.sol = np.zeros((self.TN,self.N))
+            TN = self.TN
+            
+        self.t = np.linspace(0,self.T,TN)
+        self.sol = np.zeros((TN,self.N))
+        self.U_arr = np.zeros(TN)
         
         # initial condition
         if self.init_pars is None:
             self.init = np.zeros_like(self.x)
 
         elif self.init_pars['type'] == 'gaussian':
-            #self.init = lib.gauss(self.x-(self.B+self.A)/2,sig=1)
             self.init = lib.gauss(self.x-(self.A0+self.B)/2,sig=self.init_pars['pars'])
 
         self.sol[0,:] = self.init
@@ -128,31 +131,32 @@ class NoisyMotors(object):
         self.roll_prev = np.roll(self.idx_full,1)[1:]  # [0,1,2,3,4,5,6,7] to [0,1,2,3,4,5,6]
         
         if self.ivp_method == 'euler':
-            #assert (self.CFL < 1), "CFL condition not met for Euler method"
-            
-            i = 0
-            while i < (self.TN-1):   
-                #print(i)
-                if self.use_storage:
-                    k_next = i+1
-                    k_current = i
-                else:
-                    k_next = 0
-                    k_current = 0
-                
-                #print(k,self.use_storage)
-                self.sol[k_next,:] = self.sol[k_current,:]+self.dt*(self.upwind(self.t[k_current],
-                                                                    self.sol[k_current,:],
-                                                                    self.U))
-
-                i += 1
+            self.sol = self.run_euler()
         
         else:
             obj_integrated = solve_ivp(self.upwind,[0,self.T],self.init,args=(self.U,),
                                        t_eval=self.t,
                                        method=self.ivp_method)
             self.sol = obj_integrated.y.T
+    
+    def run_euler(self):
+        #assert (self.CFL < 1), "CFL condition not met for Euler method"
         
+        self.i = 0
+        while self.i < (self.TN-1):
+            k_next, k_now = lib.get_time_index(self.use_storage,self.i)
+            
+            sol_now = self.sol[k_now,:]
+            
+            
+            self.sol[k_next,:] = sol_now + self.dt*(self.upwind(self.t[k_now],
+                                                                sol_now,
+                                                                self.U))
+
+            self.i += 1
+            
+        return self.sol
+
     def upwind(self,t,sol,U):
         """
         Implementation of upwinding scheme to be used in Euler loop
@@ -162,16 +166,51 @@ class NoisyMotors(object):
         
         out = np.zeros_like(sol)
         
+        
+        #print(t,U)
         if callable(U):
             Uval = U(t)
-        else:
+        elif (U is float) or (U is int):
             Uval = U
+        elif U == 'dynamic':
+            
+            # only used in euler method.
+            assert(self.ivp_method == 'euler')
+            
+            # generate population distribution from sol
+            
+            # get interpolation
+            interp = interp1d(self.x,sol,fill_value='extrapolate')
+            x_pdf = lib.x_pdf_gen(interp,a=self.A0,b=self.B,name='x_pdf')
+            
+            # draw from population distribution
+            xs = x_pdf.rvs(size=100)
+            print(xs)
+            
+            # get total force
+            f_up = np.sum(lib.force_position(xs))
+            
+            f_down = 0
+            
+            Uval = (-f_up + f_down)/(self.zeta)
+            
+            # update velocity
+            #Uval = self.update_velocity(f_up,f_down,Uval)
+            
+            
+            print(Uval)
+            
+
+        if self.ivp_method == 'euler' and self.use_storage:
+            self.U_arr[self.i] = Uval
+            
+        else:
+            raise ValueError("Unrecognized option for velocity,"+str(U))
         
         if Uval > 0:
             # boundaries
             idx_update = self.idx_except_first
             out[0] = -self.beta*sol[0]-sol[0]*Uval/self.dx
-            
             
         else:
             # boundaries
@@ -184,20 +223,15 @@ class NoisyMotors(object):
         p_plus = (sol[self.roll_next]-sol[self.idx_except_last])/self.dx
         p_minus = (sol[self.idx_except_first]-sol[self.roll_prev])/self.dx
         
-        
         # update derivatives
         out[idx_update] = -self.beta*(sol[idx_update]) - p_plus*U_minus - p_minus*U_plus
-        #out[-1] = - p_plus[-1]*U_minus - p_minus[-1]*U_plus
-        
-        
+
         self.theta_n = np.sum(sol)*self.dx
         #assert((self.theta_n <= 1) and (self.theta_n >= 0))
         
         # update input
         if self.source:
             out[self.A_idx] += self.alpha*(1-self.theta_n)/self.dx
-        
-        #out[-1] += self.alpha-self.theta_n*(self.alpha+self.beta)/self.dx
         
         return out
     

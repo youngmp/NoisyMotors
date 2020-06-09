@@ -429,16 +429,30 @@ def test_U_variable(**kwargs):
     a = nm(**kwargs)
     
     a.run()
+    
+    mass = np.sum(a.sol,axis=1)*a.dx
+    
+    ss_mass = np.zeros(a.TN)
+    for i in range(len(a.t)):
         
+        if a.U_arr[i] > 0:
+            x = a.x[a.x > a.A]
+        else:
+            x = a.x[a.x <= a.A]
+        
+        ss_mass[i] = np.sum(lib.phi(x,a.U_arr[i],a))*a.dx
+    
     FFMpegWriter = manimation.writers['ffmpeg']
     metadata = dict(title='Movie Test', artist='Matplotlib',
                     comment='Movie support!')
     writer = FFMpegWriter(fps=100, metadata=metadata)
     
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8,8))
     
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(212)
+    ax1 = fig.add_subplot(311)
+    ax2 = fig.add_subplot(312)
+    ax3 = fig.add_subplot(313)
+    
     
     
     image, = ax1.plot([],[])
@@ -453,6 +467,15 @@ def test_U_variable(**kwargs):
     
     ax2.plot([a.t[0],a.t[-1]],[0,0],ls='--',color='gray')
     
+    
+    
+    
+    ax3.plot(a.t,mass)
+    ax3.plot(a.t,ss_mass,ls='--',color='gray',label='ss mass')
+    #ax3.plot([a.t[0],a.t[-1]],[],ls='--',color='gray',label='True mass U>0')
+    #ax3.plot([a.t[0],a.t[-1]],[],ls='-',color='k',label='True mass U<0')
+    mass_pos = ax3.scatter(a.t[0],mass[0])
+    
     ax1.set_xlim(a.A0,a.B)
     ax1.set_ylim(0,.2)
     
@@ -464,19 +487,78 @@ def test_U_variable(**kwargs):
     ax2.set_xlabel('t')
     ax2.set_ylabel('U')
     
+    ax3.set_ylabel('mass')
+    ax3.set_xlabel('t')
+    
+    ax3.legend()
+    
     plt.tight_layout()
     
     with writer.saving(fig,"test.mp4",dpi=100):
         for i in range(len(a.sol[:,0])):
             image.set_data(a.x,a.sol[i,:])
             vel_pos.set_offsets([a.t[i],a.U(a.t[i])])
+            mass_pos.set_offsets([a.t[i],mass[i]])
             
             vel_text.set_text('U=%.2f' % a.U(a.dt*i))
             
             writer.grab_frame()
 
 
-def fn_test(t,om=10):
+def test_U_dynamic(**kwargs):
+    
+    
+    # solver must be euler to accurately save velocity dynamics.
+    assert(kwargs['ivp_method'] == 'euler')
+    assert(kwargs['use_storage'] is True)
+    
+    a = nm(**kwargs)
+    
+    a.run()
+    
+    FFMpegWriter = manimation.writers['ffmpeg']
+    metadata = dict(title='Movie Test', artist='Matplotlib',
+                    comment='Movie support!')
+    writer = FFMpegWriter(fps=100, metadata=metadata)
+    
+    fig = plt.figure()
+    
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+    
+    ax2.plot(a.t,a.U_arr)
+    
+    
+    ax2.plot([a.t[0],a.t[-1]],[0,0],ls='--',color='gray')
+    
+    ax1.set_xlim(a.A0,a.B)
+    ax1.set_ylim(0,.2)
+    
+    
+    ax1.set_xlabel('x')
+    ax1.set_ylabel(r'$\phi$')
+    
+    ax2.set_xlabel('t')
+    ax2.set_ylabel('U')
+    
+    plt.tight_layout()
+    
+    if False:
+        with writer.saving(fig,"test2.mp4",dpi=100):
+            for i in range(len(a.sol[:,0])):
+                #image.set_data(a.x,a.sol[i,:])
+            
+                writer.grab_frame()
+
+    fname = (DIR_TESTS
+             + 'U_dynamic_'
+             + lib.fname_suffix(**kwargs))
+
+    plt.savefig(fname)
+    plt.close()
+
+
+def fn_test(t,om=15):
     #print(np.cos(om*t))
     #print(np.cos(om*t)**(1/3))
     
@@ -528,12 +610,13 @@ def main():
         test_U_fixed_dynamic(Nlist=5**np.arange(2,5,1),**kwargs)
         
     # Tests where ground truth is not known
+    
     if True:
-        # VARIABLE VELOCITY CHECK
+        # VARIABLE (EXOGENOUS) VELOCITY CHECK
         # FULL CHECK (U<0)
         kwargs = {'U':fn_test, 'A0':-2, 'A':5, 'B':5.5,
-                  'T':1,'beta':126,'alpha':14,'N':200,
-                  'ivp_method':'RK45','use_storage':True}
+                  'T':.5,'beta':126,'alpha':14,'N':200,
+                  'ivp_method':'euler','use_storage':True}
         
 
         t = np.linspace(0,kwargs['T'],100)
@@ -543,8 +626,22 @@ def main():
         dx = (kwargs['B']-kwargs['A0'])/kwargs['N']
         kwargs['dt'] = CFL*dx/np.abs(max_U)
         
-        test_U_variable(Nlist=5**np.arange(2,5,1),**kwargs)
+        test_U_variable(**kwargs)
     
-    
+    if False:
+        # VELOCITY UPDATE CHECK
+        # FULL CHECK (U<0)
+        kwargs = {'U':'dynamic', 'A0':-2, 'A':5, 'B':5.5,
+                  'T':.01,'beta':126,'alpha':14,'N':200,
+                  'ivp_method':'euler','use_storage':True}
+        
+        max_U = 100
+        CFL = 0.5
+        dx = (kwargs['B']-kwargs['A0'])/kwargs['N']
+        kwargs['dt'] = CFL*dx/np.abs(max_U)
+        
+        test_U_dynamic(**kwargs)
+
+
 if __name__ == "__main__":
     main()

@@ -8,6 +8,7 @@ Created on Mon May  4 15:59:28 2020
 
 from numpy.linalg import norm
 
+import scipy.stats as st
 import numpy as np
 
 
@@ -46,6 +47,25 @@ def disp_params(a,show_arrays=False,inline=True):
     print()
     
     
+def force_position(x,p1=4,gamma=0.322,choice='exp'):
+    """
+    p1 = 4 # pN
+    gamma = 0.322 # /nm
+    """
+
+    #return x#/self.gamma
+    if (choice == 'linear') or (choice == 'lin'):
+        return x*p1*gamma
+    
+    elif choice == 'exp':
+        
+        return p1*(np.exp(gamma*x)-1)
+        
+    else:
+        raise Exception('Unrecognized force-position curve',choice)
+        
+
+    
 def disp_norms(obj,ground_truth_values):
     sol_final = obj.sol[-1,:]
     sol_true = ground_truth_values
@@ -75,25 +95,24 @@ def ground_truth(obj):
     return obj.ground_truth
     
 
-def phi(obj):
+def phi(x,U,obj):
     """
     Ground truth steady-state phi function for U<0 and U>0
     """
-    z = obj.x[obj.part_idxs]
-    sgn = np.sign(obj.U)
+    
+    sgn = np.sign(U)
 
     #out = np.zeros_like(z)
     al = obj.alpha
     be = obj.beta
-    U = obj.U
     
-    ee = np.exp((obj.A-z)*be/U)
+    ee = np.exp((obj.A-x)*be/U)
     ee2 = np.exp((obj.A-obj.B)*be/U)
     
     if sgn < 0:
-        return sgn*ee*al*be/(obj.U*(al+be))
+        return sgn*ee*al*be/(U*(al+be))
     else:
-        return sgn*ee*al*be/(obj.U*(al-ee2*al+be))
+        return sgn*ee*al*be/(U*(al-ee2*al+be))
 
 
 def gauss(x,sig):
@@ -132,3 +151,46 @@ def mass_fn(t,initial_mass,**kwargs):
     
     return al/(al+be) + (initial_mass - al/(al+be))*np.exp(-(al+be)*t)
     
+
+class x_pdf_gen(st.rv_continuous):
+    """
+    needed to create custom PDF
+    
+    PDF for motor position based on population distribution.
+    
+    f must be a function. in our case it is the interp1d function.
+    
+    to generate PDF, write
+    
+    x_pdf = x_pdf_gen(a=A0,b=B,name='x_pdf')
+    
+    then to draw,
+    
+    x_pdf.rvs(size=10)
+    
+    to draw 10 samples.
+    """
+    
+    def __init__(self,f,a,b,name):
+        st.rv_continuous.__init__(self)
+        self.f = f
+        self.a = a
+        self.b = b
+        self.name = name
+        
+        print(a,b)
+    
+    def _pdf(self,x):
+        #print(x)
+        return self.f(x)
+  
+    
+def get_time_index(use_storage,i):
+    if use_storage:
+        k_next = i+1
+        k_current = i
+    else:
+        k_next = 0
+        k_current = 0
+    
+    return k_next, k_current
