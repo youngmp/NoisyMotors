@@ -17,12 +17,12 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 
-import libNoisyMotors as lib
+import libMotorPDE as lib
 
 matplotlib.use('TkAgg')
 
 
-class NoisyMotors(object):
+class MotorPDE(object):
     
     def __init__(self,**kwargs):
 

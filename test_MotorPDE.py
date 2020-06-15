@@ -3,8 +3,8 @@
 import and test pde2.py
 """
 
-from NoisyMotors import NoisyMotors as nm
-import libNoisyMotors as lib
+from MotorPDE import MotorPDE as nm
+import libMotorPDE as lib
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -352,7 +352,8 @@ def run_U_fixed_ss(**kwargs):
     return np.amax(np.abs(a.sol[-1,:]-ground_truth_values))
 
 
-def test_U_fixed_dynamic(CFL=0.5,Nlist=10**np.arange(2,5,1),**kwargs):
+def test_U_fixed_dynamics(CFL=0.5,dt_list=5.**np.arange(-4,-9,-1),**kwargs):
+    
     
     print()
     print('Testing Fixed U='+str(kwargs['U']))
@@ -361,13 +362,14 @@ def test_U_fixed_dynamic(CFL=0.5,Nlist=10**np.arange(2,5,1),**kwargs):
     diff_list = []
     diff_list = []
     
-    for N in Nlist:
-        kwargs['N'] = N
-        dx = (kwargs['B']-kwargs['A0'])/kwargs['N']
-        kwargs['dt'] = CFL*dx/np.abs(kwargs['U'])
+    kwargs['N'] = 100
+    
+    for dt in dt_list:
         
-        run_U_fixed_dynamic(show=False,**kwargs)
-        diff = run_U_fixed_dynamic(show=False,**kwargs)
+        #kwargs['dx'] = np.abs(kwargs['U'])*dt/CFL
+        #kwargs['N'] = int((kwargs['B']-kwargs['A0'])/kwargs['dx'])
+        kwargs['dt'] = dt
+        diff = run_U_fixed_dynamics(show=False,**kwargs)
         
         diff_list.append(diff)
         
@@ -378,15 +380,15 @@ def test_U_fixed_dynamic(CFL=0.5,Nlist=10**np.arange(2,5,1),**kwargs):
     with open(fname_csv, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['N','diff max'])
-        print('N\t err')
-        for i in range(len(Nlist)):
-            writer.writerow([Nlist[i],diff_list[i]])
-            print(Nlist[i],'\t',diff_list[i])
+        print('dt\t err')
+        for i in range(len(dt_list)):
+            writer.writerow([dt_list[i],diff_list[i]])
+            print(dt_list[i],'\t',diff_list[i])
     
     
 
 
-def run_U_fixed_dynamic(**kwargs):
+def run_U_fixed_dynamics(**kwargs):
     """
     Run simulation for a given set of parameter values
     and generate relevant plots
@@ -405,7 +407,6 @@ def run_U_fixed_dynamic(**kwargs):
     initial_mass = np.sum(a.sol[0,:])*a.dx
     mass_true = lib.mass_fn(a.t,initial_mass,**kwargs)
     #lib.disp_norms(a,ground_truth_values)
-    
     
     fig = plt.figure(figsize=(10,5))
     ax11 = fig.add_subplot(121)
@@ -429,6 +430,9 @@ def run_U_fixed_dynamic(**kwargs):
     ax12.legend()
     
     plt.tight_layout()
+    
+    # include dt
+    kwargs = {**kwargs, **{'dt':a.dt}}
     
     fname = (DIR_TESTS
              + 'U_fixed_dynamics_'
@@ -469,8 +473,6 @@ def test_U_variable(**kwargs):
     ax2 = fig.add_subplot(312)
     ax3 = fig.add_subplot(313)
     
-    
-    
     image, = ax1.plot([],[])
     
     # get bounds for velocity function
@@ -482,9 +484,6 @@ def test_U_variable(**kwargs):
     vel_pos = ax2.scatter(a.t[0],a.U(a.t[0]))
     
     ax2.plot([a.t[0],a.t[-1]],[0,0],ls='--',color='gray')
-    
-    
-    
     
     ax3.plot(a.t,mass)
     ax3.plot(a.t,ss_mass,ls='--',color='gray',label='ss mass')
@@ -522,8 +521,9 @@ def test_U_variable(**kwargs):
 
 
 def test_U_dynamic(**kwargs):
-    
-    
+    """
+    check that convergence holds in dt but dx.
+    """
     # solver must be euler to accurately save velocity dynamics.
     assert(kwargs['ivp_method'] == 'euler')
     assert(kwargs['use_storage'] is True)
@@ -590,28 +590,30 @@ def main():
     if quick_test:
         # for fast debugging
         Nlist = 5**np.arange(2,5,1)
+        Nlist2 = Nlist
+        dt_list = 5.**np.arange(-4,-8,-1)
     else:
         # test to machine epsilon
         Nlist = 10**np.arange(2,5,1)
+        Nlist2 = 10**np.arange(3,6,1)
+        dt_list = 10.**np.arange(-4,-10,-1)
     
     # Tests where ground truth is known. set if True to run.
-    if True:
+    if False:
         # CONSERVATION CHECK with Gaussian init
         kwargs = {'U':100, 'A0':0, 'A':0, 'B':0.5,
                   'T':0.0001,'beta':0,
                   'ivp_method':'euler','use_storage':True,
                   'source':False,'init_pars':{'type':'gaussian','pars':0.01}}
         
-        test_conservation(Nlist=Nlist,**kwargs)
+        test_conservation(Nlist=5**np.arange(2,5,1),**kwargs)
         
-    if False:
         # FLUX CHECK with Gaussian init
-        kwargs = {'U':10, 'A0':0, 'A':0, 'B':0.01,
-                  'T':0.001,'beta':0,
+        kwargs = {'U':200, 'A0':0, 'A':0, 'B':0.5,
+                  'T':0.002,'beta':0,
                   'ivp_method':'euler','use_storage':True,
-                  'source':False,'init_pars':{'type':'gaussian','pars':0.0001}}
-        test_flux(Nlist=Nlist,**kwargs)
-        
+                  'source':False,'init_pars':{'type':'gaussian','pars':0.01}}
+        test_flux(Nlist=5**np.arange(2,5,1),**kwargs)
         
     if False:
         # FULL CHECK SS with source (U>0) 
@@ -621,19 +623,21 @@ def main():
         
         test_U_fixed_ss(Nlist=Nlist,**kwargs)
     
+    if True:
         # FULL CHECK SS with source (U<0)
         kwargs = {'U':-100, 'A0':-10, 'A':5, 'B':5.5,
                   'T':0.1,'beta':126,
                   'ivp_method':'euler','use_storage':False}
         
-        test_U_fixed_ss(Nlist=Nlist,**kwargs)
+        test_U_fixed_ss(Nlist=Nlist2,**kwargs)
     
+    if False:
         # FULL CHECK DYNAMIC + FIXED VELOCITY
-        kwargs = {'U':-100, 'A0':-10, 'A':5, 'B':5.5,
-                  'T':0.1,'beta':126,'alpha':14,
+        kwargs = {'U':-10, 'A0':0, 'A':5, 'B':5.01,
+                  'T':0.02,'beta':126,'alpha':14,
                   'ivp_method':'euler','use_storage':True}
         
-        test_U_fixed_dynamic(Nlist=5**np.arange(2,5,1),**kwargs)
+        test_U_fixed_dynamics(dt_list=dt_list,**kwargs)
         
     # Tests where ground truth is not known
     
