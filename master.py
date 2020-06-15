@@ -8,73 +8,50 @@ import os
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from lubrication import lubrication as LB
-
 
 import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] 
 
-pi=np.pi
-exp=np.exp
-sqrt=np.sqrt
-Sqrt=np.sqrt
-
+pi = np.pi
+exp = np.exp
+sqrt = np.sqrt
+Sqrt = np.sqrt
 
 
 class Master(object):
 
-    def __init__(self,
-                 al=14,
-                 be=126,
-                 nX=100,
-                 nY=100,
-                 ze=0.048,
+    def __init__(self,**kwargs):
 
-                 dt_factor=0.01,
-                 switch_v=100,
-                 gm=0.322,
-                 p1=4,
+        defaults = {'al':14,
+                    'be':126,
+                    'nX':100,
+                    'nY':100,
+                    'ze':0.048,
+                    'dt_factor':0.01,
+                    'switch_v':100,
+                    'gm':0.322,
+                    'p1':4,
+                    'X0':1,
+                    'Y0':1,
+                    'A':5,
+                    'B':5.5,
+                    'T':5,
+                    'seed':0,
+                    'ext':True,
+                    'use_storage':True
+                    }
 
-                 X0=1,Y0=1,
-                 A = 5,
-                 B = 5.5,
-                 T=5,
-                 seed=0,
-
-                 ext=True,
-                 use_storage=True
-    ):
-
+        # define defaults if not defined in kwargs
+        for (prop, default) in defaults.items():
+            setattr(self, prop, kwargs.get(prop, default))
         
-        self.ze = ze
-
-        #print('ze in init of masetr',self.ze)
-        self.gm = gm #
-        self.p1 = p1 # p1 and gm from charlie's book
-        self.k = self.p1*self.gm # spring constant, see book exercise for derivation
+        self.k = self.p1*self.gm  # spring constant
         
-        self.al = al
-        self.be = be
-        self.nX = nX
-        self.nY = nY
-
-        self.X0 = X0
-        self.Y0 = Y0
-        
-        self.A = A
-        self.B = B
-        self.dt_factor = dt_factor
-
-        self.ext = ext
-        self.use_storage = use_storage
-        self.switch_v = switch_v # threshold for switching event detection
-        self.seed = seed
-
-        self.T =T # final simulation time
         self.dt = self.dt_factor/(self.al+self.be+self.nX+self.nY)
-        self.TN = int(self.T/self.dt) # total anticipated time steps
-
+        self.TN = int(self.T/self.dt)  # total anticipated time steps
+        
+        
         if self.use_storage:
             self.t = np.linspace(0,self.T,self.TN)
         else:
@@ -140,22 +117,26 @@ class Master(object):
         array version of the above velocity equaiton
         """
         
-        assert(len(nx)==len(ny))
+        A = self.A
+        B = self.B
+        be = self.be
+        ze = self.ze
+        k = self.k
+        
+        assert(len(nx) == len(ny))
 
         out_vel = np.zeros(len(nx))
 
-        return -(((self.A*nx - self.A*ny)*self.be)/(nx + ny + self.be*self.ze))
+        return -(((A*nx - A*ny)*be)/(nx + ny + be*ze))
+        
+        # if Y > X then velocity is positive
+        pos_bool = ny > nx 
+        neg_bool = nx >= ny
 
-        pos_bool = ny>nx # if Y > X then velocity is positive
-        neg_bool = nx>=ny
 
-        #print('ze in vel_array in master',self.ze)
+        out_vel[pos_bool] = (2*A*k*ny[pos_bool]*be - B*k*(nx[pos_bool] + ny[pos_bool])*be + (A - B)*be**2*ze +sqrt(self.be**2*(4*self.A*(self.A - self.B)*self.k*(nx[pos_bool] - ny[pos_bool])*(self.k*ny[pos_bool] + self.be*self.ze) +(self.B*self.k*(nx[pos_bool] + ny[pos_bool]) + self.B*self.be*self.ze - self.A*(2*self.k*ny[pos_bool] + self.be*self.ze))**2)))/(2.*(self.k*ny[pos_bool] + self.be*self.ze))
 
-        #return self.k*self.A*(ny-nx)/self.ze
-
-        out_vel[pos_bool] = (2*self.A*self.k*ny[pos_bool]*self.be - self.B*self.k*(nx[pos_bool] + ny[pos_bool])*self.be + (self.A - self.B)*self.be**2*self.ze +sqrt(self.be**2*(4*self.A*(self.A - self.B)*self.k*(nx[pos_bool] - ny[pos_bool])*(self.k*ny[pos_bool] + self.be*self.ze) +(self.B*self.k*(nx[pos_bool] + ny[pos_bool]) + self.B*self.be*self.ze - self.A*(2*self.k*ny[pos_bool] + self.be*self.ze))**2)))/(2.*(self.k*ny[pos_bool] + self.be*self.ze))
-
-        out_vel[neg_bool] =  (-2*self.A*self.k*nx[neg_bool]*self.be + self.B*self.k*nx[neg_bool]*self.be + self.B*self.k*ny[neg_bool]*self.be - self.A*self.be**2*self.ze + self.B*self.be**2*self.ze -sqrt(self.be**2*(-4*self.A*(self.A - self.B)*self.k*(nx[neg_bool] - ny[neg_bool])*(self.k*nx[neg_bool] + self.be*self.ze) +(self.A*(2*self.k*nx[neg_bool] + self.be*self.ze) - self.B*(self.k*(nx[neg_bool] + ny[neg_bool]) + self.be*self.ze))**2)))/(2.*(self.k*nx[neg_bool] + self.be*self.ze))
+        out_vel[neg_bool] = (-2*A*k*nx[neg_bool]*be + B*k*nx[neg_bool]*be + B*k*ny[neg_bool]*be - A*be**2*ze + self.B*self.be**2*self.ze -sqrt(self.be**2*(-4*self.A*(self.A - self.B)*self.k*(nx[neg_bool] - ny[neg_bool])*(self.k*nx[neg_bool] + self.be*self.ze) +(self.A*(2*self.k*nx[neg_bool] + self.be*self.ze) - self.B*(self.k*(nx[neg_bool] + ny[neg_bool]) + self.be*self.ze))**2)))/(2.*(self.k*nx[neg_bool] + self.be*self.ze))
         
         return out_vel
         
@@ -178,7 +159,8 @@ class Master(object):
 
         self.switch_times = []
 
-        side = 0 # keep track of which side you are on after switch
+        # keep track of which side you are on after switch
+        side = 0 
 
         i = 1
         while i < self.TN:
@@ -200,8 +182,10 @@ class Master(object):
             ry = np.random.rand()
 
             # update X
+            
+            # decay rate
             p1 = self.al*(self.nX-self.X[jm])*self.dt
-            #p2 = self.X[i-1]*(self.be+np.abs(v)*np.heaviside(v,0)/(self.B-self.A))*self.dt # decay rate
+            #p2 = self.X[i-1]*(self.be+np.abs(v)*np.heaviside(v,0)/(self.B-self.A))*self.dt #
 
             if v == 0:
                 rate_extra = 1
@@ -209,12 +193,10 @@ class Master(object):
                 rate_extra = 1/(1-exp(self.be*(self.A-self.B)/np.abs(v)))
 
             lam1 = np.heaviside(v,0)
-            p2 = self.X[jm]*(self.be*( (1-lam1)+rate_extra*lam1 ))*self.dt # decay rate
+            
+            # decay rate
+            p2 = self.X[jm]*(self.be*((1-lam1)+rate_extra*lam1))*self.dt
 
-            #print(np.amax(p1),np.amax(p2))
-            #if p1+p2>.5:
-            #    print('p1,p2',p1,p2)
-                
             if (rx < p1):
                 self.X[j] = self.X[jm] + 1
             elif (rx >= p1) and (rx < p1+p2):
@@ -224,18 +206,20 @@ class Master(object):
 
             # update Y
             s1 = self.al*(self.nY-self.Y[jm])*self.dt
-            #s2 = self.Y[i-1]*(self.be+np.abs(v)*np.heaviside(-v,0)/(self.B-self.A))*self.dt # decay rate
+            
+            # decay rate
+            #s2 = self.Y[i-1]*(self.be+np.abs(v)*np.heaviside(-v,0)/(self.B-self.A))*self.dt 
             if v == 0:
                 rate_extra = 1
             else:
                 rate_extra = 1/(1-exp(self.be*(self.A-self.B)/np.abs(v)))
 
             lam2 = np.heaviside(-v,0)
-            s2 = self.Y[jm]*(self.be*( (1-lam2) + rate_extra*lam2 ))*self.dt # decay rate           
-
             
+            # decay rate
+            s2 = self.Y[jm]*(self.be*((1-lam2) + rate_extra*lam2))*self.dt
 
-            if i %10000 == 0:
+            if i % 10000 == 0:
                 #print('t=%.2f,p1=%.4f,p2=%.4f,X=%d'%(self.t[i],p1,p2,self.X[i-1]),end='\r')
                 print('t=%.2f,p1=%.4f,p2=%.4f,s1=%.4f,s2=%.4f,X=%d,Y=%d,v=%.4f'%(i*self.dt,p1,p2,s1,s2,self.X[jm],self.Y[jm],self.V[jm]))
                 #print(p2,self.t[i],self.X[i-1],self.V[i-1])
@@ -294,6 +278,7 @@ def plot_traces(obj):
         
         plt.show()
 
+
 def plot_heatmap(obj):
 
     if obj.use_storage:
@@ -338,51 +323,82 @@ def plot_heatmap(obj):
         fig6 = plt.figure(figsize=(4,4))
         ax_fig6 = fig6.add_subplot(111)
         
-        hist = ax_fig6.hist(obj.X,bins=np.arange(0,obj.nX+1.5)-0.5,alpha=.5)
-        hist = ax_fig6.hist(obj.Y,bins=np.arange(0,obj.nY+1.5)-0.5,alpha=.5)
+        #hist = ax_fig6.hist(obj.X,bins=np.arange(0,obj.nX+1.5)-0.5,alpha=.5)
+        #hist = ax_fig6.hist(obj.Y,bins=np.arange(0,obj.nY+1.5)-0.5,alpha=.5)
+        
+        ax_fig6.hist(obj.X,bins=np.arange(0,obj.nX+1.5)-0.5,alpha=.5)
+        ax_fig6.hist(obj.Y,bins=np.arange(0,obj.nY+1.5)-0.5,alpha=.5)
         
         
         fig7 = plt.figure(figsize=(4,4))
         ax_fig7 = fig7.add_subplot(111)
         
-        hist = ax_fig7.hist(obj.V,100,alpha=.5)
+        #hist = ax_fig7.hist(obj.V,100,alpha=.5)
+        ax_fig7.hist(obj.V,100,alpha=.5)
         
         plt.show()
+
 
 def main():
 
 
-    parser = argparse.ArgumentParser(description='run the agent-based Myosin motor model',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description='run the agent-based Myosin motor model',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-s','--seed',default=0,type=int,help='Set random number seed for simulation')
+    parser.add_argument('-s','--seed',default=0,type=int,
+                        help='Set random number seed for simulation')
     #parser.add_argument('-z','--zeta',default=0,type=np.float64,help='Set viscous drag')
 
-    parser.add_argument('-T','--Tfinal',default=10,type=np.float64,help='Set total simulation time')
-    parser.add_argument('-d','--dt',default=0.001,type=np.float64,help='Set time step factor')
+    parser.add_argument('-T','--Tfinal',default=10,type=np.float64,
+                        help='Set total simulation time')
+    parser.add_argument('-d','--dt',default=0.001,type=np.float64,
+                        help='Set time step factor')
 
     """
-    parser.add_argument('--save_switch',dest='switch',action='store_true',help='If true, save switching rates')
-    parser.add_argument('--no-save_switch',dest='switch',action='store_false',help='If true, save switching rates')
+    parser.add_argument('--save_switch',dest='switch',action='store_true',
+                        help='If true, save switching rates')
+    parser.add_argument('--no-save_switch',dest='switch',action='store_false',
+                        help='If true, save switching rates')
     parser.set_defaults(switch=False)
     """
     
-    parser.add_argument('--storage',dest='storage',action='store_true',help='If true, store all trace data to memory (for plotting)')
+    parser.add_argument('--storage',dest='storage',action='store_true',
+                        help=('If true, store all trace data to memory (for plotting)'))
     parser.add_argument('--no-storage',dest='storage',action='store_false')
     parser.set_defaults(storage=True)
 
-    parser.add_argument('--ext',dest='ext',action='store_true',help='If true, use force extension in preferred direction. else do not udate position in prefeerred direction')
+    parser.add_argument('--ext',dest='ext',action='store_true',
+                        help=('If true, use force extension in preferred direction. '
+                              'else do not udate position in prefeerred direction'))
     parser.add_argument('--no-ext',dest='ext',action='store_false')
     parser.set_defaults(ext=True)
 
-    parser.add_argument('-X','--nX',default=100,type=int,help='Set total motor number (X left preferred)')
-    parser.add_argument('-Y','--nY',default=100,type=int,help='Set total motor number (Y right preferrred)')
+    parser.add_argument('-X','--nX',default=100,type=int,
+                        help='Set total motor number (X left preferred)')
+    parser.add_argument('-Y','--nY',default=100,type=int,
+                        help='Set total motor number (Y right preferrred)')
 
     args = parser.parse_args()
     print('args',args)
-
-    a = Master(X0=0,Y0=0,seed=args.seed,nX=args.nX,nY=args.nY,T=args.Tfinal,
-               dt_factor=args.dt,ze=2,B=5.1,al=25,be=100,switch_v=50.4,ext=args.ext,
-               use_storage=args.storage)
+    
+    
+    
+    d_flags = vars(args)
+    
+    # options not from terminal flags
+    options = {'X0':0,'Y0':0,
+               'ze':2,'B':5.1,
+               'al':25,'be':100,
+               'T':1,
+               'switch_v':50.4}
+    
+    kwargs = {**d_flags,**options}
+    
+    #a = Master(X0=0,Y0=0,seed=args.seed,nX=args.nX,nY=args.nY,T=args.Tfinal,
+    #           dt_factor=args.dt,ze=2,B=5.1,al=25,be=100,switch_v=50.4,ext=args.ext,
+    #           use_storage=args.storage)
+    
+    a = Master(**kwargs)
 
     a.run_states()
 
