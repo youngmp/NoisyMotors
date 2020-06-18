@@ -3,6 +3,8 @@
 
 import argparse
 
+import libMotorPDE as libp
+from MotorPDE import MotorPDE
 
 import os
 import time
@@ -19,18 +21,20 @@ sqrt = np.sqrt
 Sqrt = np.sqrt
 
 
-class Master(object):
+class Master(MotorPDE):
 
+    
     def __init__(self,**kwargs):
 
-        defaults = {'al':14,
-                    'be':126,
+        
+        defaults = {'alpha':14,
+                    'beta':126,
                     'nX':100,
                     'nY':100,
-                    'ze':0.048,
+                    'zeta':0.048,
                     'dt_factor':0.01,
                     'switch_v':100,
-                    'gm':0.322,
+                    'gamma':0.322,
                     'p1':4,
                     'X0':1,
                     'Y0':1,
@@ -39,18 +43,21 @@ class Master(object):
                     'T':5,
                     'seed':0,
                     'ext':True,
-                    'use_storage':True
+                    'use_storage':True,
+                    'force_pos_type':'exp'
                     }
 
+        
         # define defaults if not defined in kwargs
         for (prop, default) in defaults.items():
             setattr(self, prop, kwargs.get(prop, default))
         
-        self.k = self.p1*self.gm  # spring constant
+        kwargs['dt'] = self.dt_factor/(self.alpha+self.beta+self.nX+self.nY)
+        MotorPDE.__init__(self,**kwargs)
         
-        self.dt = self.dt_factor/(self.al+self.be+self.nX+self.nY)
-        self.TN = int(self.T/self.dt)  # total anticipated time steps
+        libp.disp_params(self)
         
+        self.k = self.p1*self.gamma  # spring constant
         
         if self.use_storage:
             self.t = np.linspace(0,self.T,self.TN)
@@ -59,17 +66,34 @@ class Master(object):
     
     def u(self,x,v):
 
-        c = 1-exp(-self.be*(self.B-self.A)/v)
-        u0 = (self.al*self.be)/(v*(self.al*c+self.be))
+        c = 1-exp(-self.beta*(self.B-self.A)/v)
+        u0 = (self.alpha*self.beta)/(v*(self.alpha*c+self.beta))
 
-        return u0*exp(-self.be*(x-self.A)/v)
+        return u0*exp(-self.beta*(x-self.A)/v)
 
+    def p(self,x):
+        """
+        p1 = 4 # pN
+        gamma = 0.322 # /nm
+        """
+
+        #return x#/self.gamma
+        if (self.force_pos_type == 'linear') or (self.force_pos_type == 'lin'):
+            return x*self.p1*self.gamma
+        
+        elif self.force_pos_type == 'exp':
+            return self.p1*(exp(self.gamma*x)-1)
+            
+        else:
+            raise Exception('I dont recognize this type of force-position curve',
+                            self.force_pos_type)
+            
     def kp(self,i,n):
         """
         i: motor state
         n: total motor number
         """
-        return self.al*(n-i)
+        return self.alpha*(n-i)
 
     def si(self,i,v):
         """
@@ -77,10 +101,10 @@ class Master(object):
         """
         
         if v <= 0:
-            return self.be*i
+            return self.beta*i
         else:
-            #return self.be*i + i*v*self.u(self.B,v)
-            return self.be*i + i*v/self.B
+            #return self.beta*i + i*v*self.u(self.B,v)
+            return self.beta*i + i*v/self.B
 
     def gmHat(self,i):
         return i/(self.B-self.A)
@@ -90,26 +114,26 @@ class Master(object):
 
         #nx = np.asarray(nx)
         #ny = np.asarray(ny)
-        #print('ze in vel in master',self.ze)
+        #print('ze in vel in master',self.zeta)
 
-        #return self.k*self.A*(ny-nx)/self.ze
+        #return self.k*self.A*(ny-nx)/self.zeta
 
-        #return -(((self.A*nx - self.A*ny)*self.be)/(nx + ny + self.be*self.ze))
+        #return -(((self.A*nx - self.A*ny)*self.beta)/(nx + ny + self.beta*self.zeta))
 
         # see agents_velocity.nb. uses saturating approximation to true force-velocity
 
         if not(self.ext):
-            if nx>=ny:
-                return -(4*self.A*self.k*nx-2*self.A*self.k*ny-2*self.B*self.k*ny+self.A*self.be*self.ze-self.B*self.be*self.ze+Sqrt(-16*self.A*(self.A-self.B)*self.k*(nx-ny)*self.be*self.ze+(-4*self.A*self.k*nx+2*self.A*self.k*ny+2*self.B*self.k*ny-self.A*self.be*self.ze+self.B*self.be*self.ze)**2))/(8.*self.ze)
+            if nx >= ny:
+                return -(4*self.A*self.k*nx-2*self.A*self.k*ny-2*self.B*self.k*ny+self.A*self.beta*self.zeta-self.B*self.beta*self.zeta+Sqrt(-16*self.A*(self.A-self.B)*self.k*(nx-ny)*self.beta*self.zeta+(-4*self.A*self.k*nx+2*self.A*self.k*ny+2*self.B*self.k*ny-self.A*self.beta*self.zeta+self.B*self.beta*self.zeta)**2))/(8.*self.zeta)
             else:
-                return (-2*self.A*self.k*nx-2*self.B*self.k*nx+4*self.A*self.k*ny+self.A*self.be*self.ze-self.B*self.be*self.ze+Sqrt(16*self.A*(self.A-self.B)*self.k*(nx-ny)*self.be*self.ze+(2*self.A*self.k*nx+2*self.B*self.k*nx-4*self.A*self.k*ny-self.A*self.be*self.ze+self.B*self.be*self.ze)**2))/(8.*self.ze)
+                return (-2*self.A*self.k*nx-2*self.B*self.k*nx+4*self.A*self.k*ny+self.A*self.beta*self.zeta-self.B*self.beta*self.zeta+Sqrt(16*self.A*(self.A-self.B)*self.k*(nx-ny)*self.beta*self.zeta+(2*self.A*self.k*nx+2*self.B*self.k*nx-4*self.A*self.k*ny-self.A*self.beta*self.zeta+self.B*self.beta*self.zeta)**2))/(8.*self.zeta)
                 
         else:
-            if nx>= ny:
-                return (-5*self.A*self.k*nx*self.be + self.B*self.k*nx*self.be + 2*self.A*self.k*ny*self.be + 2*self.B*self.k*ny*self.be - self.A*self.be**2*self.ze + self.B*self.be**2*self.ze - sqrt(self.be**2*(-16*self.A*(self.A - self.B)*self.k*(nx - ny)*(self.k*nx + self.be*self.ze) +(self.k*(-5*self.A*nx + self.B*nx + 2*self.A*ny + 2*self.B*ny) + (-self.A + self.B)*self.be*self.ze)**2)))/(8.*(self.k*nx + self.be*self.ze))
+            if nx >= ny:
+                return (-5*self.A*self.k*nx*self.beta + self.B*self.k*nx*self.beta + 2*self.A*self.k*ny*self.beta + 2*self.B*self.k*ny*self.beta - self.A*self.beta**2*self.zeta + self.B*self.beta**2*self.zeta - sqrt(self.beta**2*(-16*self.A*(self.A - self.B)*self.k*(nx - ny)*(self.k*nx + self.beta*self.zeta) +(self.k*(-5*self.A*nx + self.B*nx + 2*self.A*ny + 2*self.B*ny) + (-self.A + self.B)*self.beta*self.zeta)**2)))/(8.*(self.k*nx + self.beta*self.zeta))
 
             else:
-                return (-(self.k*(2*self.A*nx + 2*self.B*nx - 5*self.A*ny + self.B*ny)*self.be) + (self.A - self.B)*self.be**2*self.ze +sqrt(self.be**2*(16*self.A*(self.A - self.B)*self.k*(nx - ny)*(self.k*ny + self.be*self.ze) +(self.k*(2*self.A*nx + 2*self.B*nx - 5*self.A*ny + self.B*ny) + (-self.A + self.B)*self.be*self.ze)**2)))/(8.*(self.k*ny + self.be*self.ze))
+                return (-(self.k*(2*self.A*nx + 2*self.B*nx - 5*self.A*ny + self.B*ny)*self.beta) + (self.A - self.B)*self.beta**2*self.zeta +sqrt(self.beta**2*(16*self.A*(self.A - self.B)*self.k*(nx - ny)*(self.k*ny + self.beta*self.zeta) +(self.k*(2*self.A*nx + 2*self.B*nx - 5*self.A*ny + self.B*ny) + (-self.A + self.B)*self.beta*self.zeta)**2)))/(8.*(self.k*ny + self.beta*self.zeta))
 
 
     def vel_array(self,nx,ny):
@@ -119,8 +143,8 @@ class Master(object):
         
         A = self.A
         B = self.B
-        be = self.be
-        ze = self.ze
+        be = self.beta
+        ze = self.zeta
         k = self.k
         
         assert(len(nx) == len(ny))
@@ -134,9 +158,9 @@ class Master(object):
         neg_bool = nx >= ny
 
 
-        out_vel[pos_bool] = (2*A*k*ny[pos_bool]*be - B*k*(nx[pos_bool] + ny[pos_bool])*be + (A - B)*be**2*ze +sqrt(self.be**2*(4*self.A*(self.A - self.B)*self.k*(nx[pos_bool] - ny[pos_bool])*(self.k*ny[pos_bool] + self.be*self.ze) +(self.B*self.k*(nx[pos_bool] + ny[pos_bool]) + self.B*self.be*self.ze - self.A*(2*self.k*ny[pos_bool] + self.be*self.ze))**2)))/(2.*(self.k*ny[pos_bool] + self.be*self.ze))
-
-        out_vel[neg_bool] = (-2*A*k*nx[neg_bool]*be + B*k*nx[neg_bool]*be + B*k*ny[neg_bool]*be - A*be**2*ze + self.B*self.be**2*self.ze -sqrt(self.be**2*(-4*self.A*(self.A - self.B)*self.k*(nx[neg_bool] - ny[neg_bool])*(self.k*nx[neg_bool] + self.be*self.ze) +(self.A*(2*self.k*nx[neg_bool] + self.be*self.ze) - self.B*(self.k*(nx[neg_bool] + ny[neg_bool]) + self.be*self.ze))**2)))/(2.*(self.k*nx[neg_bool] + self.be*self.ze))
+        out_vel[pos_bool] = (2*A*k*ny[pos_bool]*be - B*k*(nx[pos_bool] + ny[pos_bool])*be + (A - B)*be**2*ze +sqrt(self.beta**2*(4*self.A*(self.A - self.B)*self.k*(nx[pos_bool] - ny[pos_bool])*(self.k*ny[pos_bool] + self.beta*self.zeta) +(self.B*self.k*(nx[pos_bool] + ny[pos_bool]) + self.B*self.beta*self.zeta - self.A*(2*self.k*ny[pos_bool] + self.beta*self.zeta))**2)))/(2.*(self.k*ny[pos_bool] + self.beta*self.zeta))
+        
+        out_vel[neg_bool] = (-2*A*k*nx[neg_bool]*be + B*k*nx[neg_bool]*be + B*k*ny[neg_bool]*be - A*be**2*ze + self.B*self.beta**2*self.zeta -sqrt(self.beta**2*(-4*self.A*(self.A - self.B)*self.k*(nx[neg_bool] - ny[neg_bool])*(self.k*nx[neg_bool] + self.beta*self.zeta) +(self.A*(2*self.k*nx[neg_bool] + self.beta*self.zeta) - self.B*(self.k*(nx[neg_bool] + ny[neg_bool]) + self.beta*self.zeta))**2)))/(2.*(self.k*nx[neg_bool] + self.beta*self.zeta))
         
         return out_vel
         
@@ -150,9 +174,12 @@ class Master(object):
         else:
             size = 1
 
-        self.X = np.zeros(size)
-        self.Y = np.zeros(size)
+        self.X = np.zeros(size,dtype=int)
+        self.Y = np.zeros(size,dtype=int)
         self.V = np.zeros(size)
+        
+        self.posX = np.zeros((self.TN,self.N))
+        self.posY = np.zeros((self.TN,self.N))
 
         self.X[0] = self.X0
         self.Y[0] = self.Y0
@@ -162,20 +189,53 @@ class Master(object):
         # keep track of which side you are on after switch
         side = 0 
 
-        i = 1
-        while i < self.TN:
+        self.i = 1
+        while self.i < self.TN:
 
             if self.use_storage:
-                jm = i-1
-                j = i
+                j_prev = self.i-1
+                j_current = self.i
             else:
-                jm = 0
-                j = jm
+                j_prev = 0
+                j_current = j_prev
 
-            v = self.vel(self.X[jm],self.Y[jm])
+            v = self.vel(self.X[j_prev],self.Y[j_prev])
             #v = 500
+            
+            posX_prev = self.posX[j_prev,:]
+            posY_prev = self.posY[j_prev,:]
+            
+            # PDE positon update
+            self.posX[j_current,:] = posX_prev + self.dt*(self.upwind(self.t[j_prev],
+                                                                      posX_prev,
+                                                                      v))
+            
+            self.posY[j_current,:] = posY_prev + self.dt*(self.upwind(self.t[j_prev],
+                                                                      posY_prev,
+                                                                      -v))
+            
+            # draw positions
+            if np.sum(self.posX[j_current,:]) != 0:
+                Xs = libp.inverse_transform_sampling(self,self.posX[j_current,:],self.X[j_current])
+            else:
+                Xs = np.zeros(self.X)
+                
+            if np.sum(self.posY[j_current,:]) != 0:
+                Ys = libp.inverse_transform_sampling(self,self.posY[j_current,:],self.Y[j_current])
+            else:
+                Ys = np.zeros(self.Y)
+            
+            # force update
+            FX = np.sum(self.p(Xs))
+            FY = np.sum(self.p(Ys))
+            
+            #Fnet = FY - FX - self.zeta*v
+            
+            # velocity update
+            #self.V[j] = (-self.F1[jm]+self.F2[jm])/(self.zeta)
+            v = (-FX+FY)/(self.zeta)
 
-            self.V[jm] = v
+            self.V[j_prev] = v
             
             # draw random number
             rx = np.random.rand()
@@ -184,64 +244,64 @@ class Master(object):
             # update X
             
             # decay rate
-            p1 = self.al*(self.nX-self.X[jm])*self.dt
-            #p2 = self.X[i-1]*(self.be+np.abs(v)*np.heaviside(v,0)/(self.B-self.A))*self.dt #
+            p1 = self.alpha*(self.nX-self.X[j_prev])*self.dt
+            #p2 = self.X[i-1]*(self.beta+np.abs(v)*np.heaviside(v,0)/(self.B-self.A))*self.dt #
 
             if v == 0:
                 rate_extra = 1
             else:
-                rate_extra = 1/(1-exp(self.be*(self.A-self.B)/np.abs(v)))
+                rate_extra = 1/(1-exp(self.beta*(self.A-self.B)/np.abs(v)))
 
             lam1 = np.heaviside(v,0)
             
             # decay rate
-            p2 = self.X[jm]*(self.be*((1-lam1)+rate_extra*lam1))*self.dt
+            p2 = self.X[j_prev]*(self.beta*((1-lam1)+rate_extra*lam1))*self.dt
 
             if (rx < p1):
-                self.X[j] = self.X[jm] + 1
+                self.X[j_current] = self.X[j_prev] + 1
             elif (rx >= p1) and (rx < p1+p2):
-                self.X[j] = self.X[jm] - 1
+                self.X[j_current] = self.X[j_prev] - 1
             else:
-                self.X[j] = self.X[jm]
+                self.X[j_current] = self.X[j_prev]
 
             # update Y
-            s1 = self.al*(self.nY-self.Y[jm])*self.dt
+            s1 = self.alpha*(self.nY-self.Y[j_prev])*self.dt
             
             # decay rate
-            #s2 = self.Y[i-1]*(self.be+np.abs(v)*np.heaviside(-v,0)/(self.B-self.A))*self.dt 
+            #s2 = self.Y[i-1]*(self.beta+np.abs(v)*np.heaviside(-v,0)/(self.B-self.A))*self.dt 
             if v == 0:
                 rate_extra = 1
             else:
-                rate_extra = 1/(1-exp(self.be*(self.A-self.B)/np.abs(v)))
+                rate_extra = 1/(1-exp(self.beta*(self.A-self.B)/np.abs(v)))
 
             lam2 = np.heaviside(-v,0)
             
             # decay rate
-            s2 = self.Y[jm]*(self.be*((1-lam2) + rate_extra*lam2))*self.dt
+            s2 = self.Y[j_prev]*(self.beta*((1-lam2) + rate_extra*lam2))*self.dt
 
-            if i % 10000 == 0:
+            if self.i % 10000 == 0:
                 #print('t=%.2f,p1=%.4f,p2=%.4f,X=%d'%(self.t[i],p1,p2,self.X[i-1]),end='\r')
-                print('t=%.2f,p1=%.4f,p2=%.4f,s1=%.4f,s2=%.4f,X=%d,Y=%d,v=%.4f'%(i*self.dt,p1,p2,s1,s2,self.X[jm],self.Y[jm],self.V[jm]))
+                print('t=%.2f,p1=%.4f,p2=%.4f,s1=%.4f,s2=%.4f,X=%d,Y=%d,v=%.4f'%(self.i*self.dt,p1,p2,s1,s2,self.X[j_prev],self.Y[j_prev],self.V[j_prev]))
                 #print(p2,self.t[i],self.X[i-1],self.V[i-1])
 
             
             if (ry < s1):
-                self.Y[j] = self.Y[jm] + 1
+                self.Y[j_current] = self.Y[j_prev] + 1
             elif (ry >= s1) and (ry < s1+s2):
-                self.Y[j] = self.Y[jm] - 1
+                self.Y[j_current] = self.Y[j_prev] - 1
             else:
-                self.Y[j] = self.Y[jm]
+                self.Y[j_current] = self.Y[j_prev]
 
             
-            if (side == 0) and (self.V[jm] >= self.switch_v):
+            if (side == 0) and (self.V[j_prev] >= self.switch_v):
                 side = 1
-                self.switch_times.append(i*self.dt)
+                self.switch_times.append(self.i*self.dt)
 
-            if (side == 1) and (self.V[jm] <= -self.switch_v):
+            if (side == 1) and (self.V[j_prev] <= -self.switch_v):
                 side = 0
-                self.switch_times.append(i*self.dt)
+                self.switch_times.append(self.i*self.dt)
 
-            i += 1
+            self.i += 1
             
         # end while loop
         self.mfpt = np.mean(np.diff(self.switch_times))
@@ -387,8 +447,8 @@ def main():
     
     # options not from terminal flags
     options = {'X0':0,'Y0':0,
-               'ze':2,'B':5.1,
-               'al':25,'be':100,
+               'zeta':2,'B':5.1,
+               'alpha':25,'beta':100,
                'T':1,
                'switch_v':50.4}
     
