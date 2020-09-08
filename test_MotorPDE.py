@@ -15,8 +15,10 @@ import os
 #import time
 #import inspect
 
-import matplotlib
-matplotlib.use("Agg")
+from scipy.interpolate import interp1d
+
+#import matplotlib
+#matplotlib.use("Agg")
 
 
 # user modules
@@ -509,21 +511,30 @@ def test_U_variable(**kwargs):
     
     plt.tight_layout()
     
-    with writer.saving(fig,"test.mp4",dpi=100):
-        for i in range(len(a.sol[:,0])):
-            image.set_data(a.x,a.sol[i,:])
-            vel_pos.set_offsets([a.t[i],a.U(a.t[i])])
-            mass_pos.set_offsets([a.t[i],mass[i]])
-            
-            vel_text.set_text('U=%.2f' % a.U(a.dt*i))
-            
-            writer.grab_frame()
+    fname = (DIR_TESTS
+             + 'U_exogenous_'
+             + lib.fname_suffix(**kwargs))
+
+    plt.savefig(fname)
+    plt.close()
+    
+    if False:
+        with writer.saving(fig,"test.mp4",dpi=100):
+            for i in range(len(a.sol[:,0])):
+                image.set_data(a.x,a.sol[i,:])
+                vel_pos.set_offsets([a.t[i],a.U(a.t[i])])
+                mass_pos.set_offsets([a.t[i],mass[i]])
+                
+                vel_text.set_text('U=%.2f' % a.U(a.dt*i))
+                
+                writer.grab_frame()
 
 
-def test_U_dynamic(**kwargs):
+def test_U_dynamics(**kwargs):
     """
     check that convergence holds in dt but dx.
     """
+    
     # solver must be euler to accurately save velocity dynamics.
     assert(kwargs['ivp_method'] == 'euler')
     assert(kwargs['use_storage'] is True)
@@ -542,8 +553,10 @@ def test_U_dynamic(**kwargs):
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
     
-    ax2.plot(a.t,a.U_arr)
+    image, = ax1.plot([],[])
     
+    ax2.plot(a.t,a.U_arr)
+    vel_pos = ax2.scatter(a.t[0],a.U_arr[0])
     
     ax2.plot([a.t[0],a.t[-1]],[0,0],ls='--',color='gray')
     
@@ -559,20 +572,148 @@ def test_U_dynamic(**kwargs):
     
     plt.tight_layout()
     
-    if False:
+    if True:
         with writer.saving(fig,"test2.mp4",dpi=100):
             for i in range(len(a.sol[:,0])):
-                #image.set_data(a.x,a.sol[i,:])
-            
+                image.set_data(a.x,a.sol[i,:])
+                vel_pos.set_offsets([a.t[i],a.U_arr[i]])
                 writer.grab_frame()
 
     fname = (DIR_TESTS
-             + 'U_dynamic_'
+             + 'U_dynamics_'
              + lib.fname_suffix(**kwargs))
 
     plt.savefig(fname)
     plt.close()
 
+
+def test_sampling(quick=True,**kwargs):
+    """
+    for a given distribution, produce random variables that fit the distribution.
+    
+    """
+    
+    
+    
+    np.random.seed(1)
+    
+    a = nm(**kwargs)
+    
+    a.run()
+    
+    # get sol near start and near end
+    pdf1 = a.sol[int(a.TN/10),:]
+    pdfx = a.sol[int(a.TN/3),:]
+    pdf2 = a.sol[-1,:]
+    
+    if quick:
+        testing_numbers = 1000000
+    else:
+        testing_numbers = 200000000
+    
+    rvs1 = lib.inverse_transform_sampling(a,pdf1,testing_numbers)
+    rvsx = lib.inverse_transform_sampling(a,pdfx,testing_numbers)
+    rvs2 = lib.inverse_transform_sampling(a,pdf2,testing_numbers)
+    
+    fig = plt.figure(figsize=(8,8))
+    
+    gs = fig.add_gridspec(3, 2)
+    
+    ax11 = fig.add_subplot(gs[0,0])
+    ax21 = fig.add_subplot(gs[1,0])
+    ax31 = fig.add_subplot(gs[2,0])
+    
+    ax12 = fig.add_subplot(gs[0,1])
+    ax22 = fig.add_subplot(gs[1,1])
+    ax32 = fig.add_subplot(gs[2,1])
+    
+    
+    # FIRST TIME POINT
+    
+    
+    normalize1 = np.sum(pdf1)*a.dx
+    pdf1n = pdf1/normalize1
+    
+    n1, bins1, _ = ax11.hist(rvs1,density=True,bins=200,label='sampled')
+    #bins1 = (bins1[:-1]+bins1[1:])/2
+    hist1 = interp1d(bins1[1:],n1,fill_value=0.,bounds_error=False)
+    ax11.clear()
+    ax11.plot(a.x,hist1(a.x),label='sampled')
+    ax11.plot(a.x,pdf1n,label='pde (conditioned on attachment)')
+    
+    #pad = bins1[1]-bins1[0]
+    idx_pad = 10
+    lower = a.A_idx+idx_pad
+    upper = -idx_pad
+    #print(idx_pad,bins1[1]-bins1[0],a.dx)
+    
+    # err
+    ax12.plot(a.x[lower:upper],hist1(a.x)[lower:upper]-pdf1n[lower:upper])
+    ax12.set_title('err excluding 10 indices left and right ends')
+    
+    # SECOND TIME POINT
+    normalizex = np.sum(pdfx)*a.dx
+    pdfxn = pdfx/normalizex
+    nx, binsx, _ = ax21.hist(rvsx,density=True,bins=200,label='sampled')
+    #binsx = (binsx[:-1]+binsx[1:])/2
+    histx = interp1d(binsx[1:],nx,fill_value=0.,bounds_error=False)
+    ax21.clear()
+    ax21.plot(a.x,histx(a.x),label='sampled')
+    ax21.plot(a.x,pdfxn,label='pde (conditioned on attachment)')
+    
+    # err
+    ax22.plot(a.x[lower:upper],histx(a.x)[lower:upper]-pdfxn[lower:upper])
+    
+    # THIRD TIME POINT
+    normalize2 = np.sum(pdf2)*a.dx
+    pdf2n = pdf2/normalize2
+    n2, bins2, _ = ax31.hist(rvs2,density=True,bins=200,label='sampled')
+    #bins2 = (bins2[:-1]+bins2[1:])/2
+    hist2 = interp1d(bins2[1:],n2,fill_value=0,bounds_error=False)
+    ax31.clear()
+    ax31.plot(a.x,hist2(a.x),label='sampled')
+    ax31.plot(a.x,pdf2n,label='pde (conditioned on attachment)')
+    
+    # err
+    ax32.plot(a.x[lower:upper],hist2(a.x)[lower:upper]-pdf2n[lower:upper])
+    
+    ax11.set_xlabel('x')
+    ax21.set_xlabel('x')
+    ax31.set_xlabel('x')
+    
+    ax11.set_ylabel('Distribution')
+    ax21.set_ylabel('Distribution')
+    ax31.set_ylabel('Distribution')
+    
+    ax11.legend()
+    ax21.legend()
+    ax31.legend()
+    
+    plt.tight_layout()
+    
+    if a.U > 0:
+        ax11.set_xlim(a.A-a.dx*10,a.B+a.dx*10)
+        ax21.set_xlim(a.A-a.dx*10,a.B+a.dx*10)
+        ax31.set_xlim(a.A-a.dx*10,a.B+a.dx*10)
+        
+        ax12.set_xlim(a.A-a.dx*10,a.B+a.dx*10)
+        ax22.set_xlim(a.A-a.dx*10,a.B+a.dx*10)
+        ax32.set_xlim(a.A-a.dx*10,a.B+a.dx*10)
+        
+    fname = (DIR_TESTS
+             + 'test_sampling_'
+             + lib.fname_suffix(**kwargs))
+    #plt.show(block=True)
+    
+    plt.savefig(fname)
+    plt.close()
+    
+    
+    
+    print(np.amax(np.abs(hist1(a.x)[lower:upper]-pdf1n[lower:upper])))
+    print(np.amax(np.abs(histx(a.x)[lower:upper]-pdfxn[lower:upper])))
+    print(np.amax(np.abs(hist2(a.x)[lower:upper]-pdf2n[lower:upper])))
+    
 
 def fn_test(t,om=15):
     #print(np.cos(om*t))
@@ -623,10 +764,10 @@ def main():
         
         test_U_fixed_ss(Nlist=Nlist,**kwargs)
     
-    if True:
+    if False:
         # FULL CHECK SS with source (U<0)
-        kwargs = {'U':-100, 'A0':-10, 'A':5, 'B':5.5,
-                  'T':0.1,'beta':126,
+        kwargs = {'U':-121, 'A0':-10, 'A':5, 'B':5.1,
+                  'alpha':25,'beta':126,'T':0.1,
                   'ivp_method':'euler','use_storage':False}
         
         test_U_fixed_ss(Nlist=Nlist2,**kwargs)
@@ -645,7 +786,7 @@ def main():
         # VARIABLE (EXOGENOUS) VELOCITY CHECK
         # FULL CHECK (U<0)
         kwargs = {'U':fn_test, 'A0':-2, 'A':5, 'B':5.5,
-                  'T':.5,'beta':126,'alpha':14,'N':200,
+                  'T':.5,'beta':126,'alpha':14,'N':500,
                   'ivp_method':'euler','use_storage':True}
         
 
@@ -656,14 +797,14 @@ def main():
         dx = (kwargs['B']-kwargs['A0'])/kwargs['N']
         kwargs['dt'] = CFL*dx/np.abs(max_U)
         
-        test_U_variable(**kwargs)
+        test_U_variable(**kwargs,exclude=['U'])
     
     if False:
         # RV POSITION CHECK
         # NOT YET IMPLEMENTED.
         
         kwargs = {'U':'dynamic', 'A0':-2, 'A':5, 'B':5.5,
-                  'T':.01,'beta':126,'alpha':14,'N':200,
+                  'T':.1,'beta':126,'alpha':14,'N':200,
                   'ivp_method':'euler','use_storage':True}
         
         max_U = 100
@@ -671,8 +812,41 @@ def main():
         dx = (kwargs['B']-kwargs['A0'])/kwargs['N']
         kwargs['dt'] = CFL*dx/np.abs(max_U)
         
-        test_U_dynamic(**kwargs)
+        test_U_dynamics(**kwargs)
 
+    if False:
+        # test inverse sampling
+        
+        kwargs = {'U':100, 'A0':-2, 'A':5, 'B':5.5,
+                  'T':.01,'beta':126,'alpha':14,'N':1000,
+                  'ivp_method':'euler','use_storage':True}
+        
+        CFL = 0.5
+        dx = (kwargs['B']-kwargs['A0'])/kwargs['N']
+        kwargs['dt'] = CFL*dx/np.abs(kwargs['U'])
+        
+        test_sampling(**kwargs)
+        
+        kwargs['U'] = -100
+        test_sampling(**kwargs)
+        
+        
+    if True:
+        # test inverse sampling
+        
+        kwargs = {'U':-54, 'A0':-2, 'A':5, 'B':5.5,
+                  'T':.01,'beta':150,'alpha':10,'N':10000,
+                  'ivp_method':'euler','use_storage':True}
+        
+        CFL = 0.5
+        dx = (kwargs['B']-kwargs['A0'])/kwargs['N']
+        kwargs['dt'] = CFL*dx/np.abs(kwargs['U'])
+        
+        test_sampling(**kwargs)
+        
+        kwargs['U'] = -100
+        test_sampling(**kwargs)
+        
 
 if __name__ == "__main__":
     main()

@@ -7,9 +7,60 @@ Created on Mon May  4 15:59:28 2020
 """
 
 from numpy.linalg import norm
+from scipy.interpolate import interp1d
 
+import matplotlib.pyplot as plt
 import scipy.stats as st
 import numpy as np
+
+import matplotlib
+matplotlib.use('TkAgg')
+
+
+def inverse_transform_sampling(obj,pdf_array,n_samples,tol=1e-32):
+    """
+    inverse transform conditioned on attached motors.
+    
+    construct PDF only using pdf_array with probabilities above tol.
+    """
+    
+    sum_values = np.cumsum(pdf_array)/np.sum(pdf_array)
+    
+    # ignore positions with probability below tol
+    keep_idxs = (sum_values > tol)
+    
+    # keep the last index with probabily below tol
+    # this might seem unnecessary but is extremely important.
+    # otherwise interp1d will take positions outside the domain of interest.
+    keep_idx = np.argmax(keep_idxs > 0)-1
+    if keep_idx == -1:
+        sum_values[0] = 0  # force 0 when at left boundary
+    else:
+        keep_idxs[keep_idx] = True
+    
+    sum_values = sum_values[keep_idxs]
+    x = obj.x[keep_idxs]
+    
+    #print(np.amin(x),np.amax(x))
+    
+    inv_cdf = interp1d(sum_values,x)
+    
+    #print('inv_cdf(1)',inv_cdf(.999))
+    
+    if False:
+        x2 = np.linspace(0,.999999,1000)
+        fig = plt.figure()
+        
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+        
+        ax1.plot(x2,inv_cdf(x2))
+        #ax2.plot(obj.x,pdf_array)
+        ax2.plot(x,sum_values)
+        plt.show(block=True)
+        
+    r = np.random.rand(n_samples)
+    return inv_cdf(r)
 
 
 def disp_params(a,show_arrays=False,inline=True):

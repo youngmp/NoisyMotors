@@ -5,6 +5,9 @@ Created on Thu Jun 18 09:44:48 2020
 @author: zj
 """
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 
 def plot_heatmap(obj):
@@ -65,3 +68,32 @@ def plot_heatmap(obj):
         ax_fig7.hist(obj.V,100,alpha=.5)
         
         plt.show()
+        
+        
+def plot_traces(obj):
+
+
+    if obj.use_storage:
+
+        fig = plt.figure(figsize=(8,3))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+
+        ax1.plot(obj.t,obj.X,alpha=.5,label='X')
+        ax1.plot(obj.t,obj.Y,alpha=.5,label='Y')
+
+        ax2.plot(obj.t,obj.V,alpha=.5)
+        ax2.scatter(obj.switch_times,np.zeros(len(obj.switch_times)),color='tab:red',s=10)
+        
+        ax1.set_xlabel('t (s)')
+        ax1.set_title(r'$n_X=%d,n_Y=%d$'%(obj.nX,obj.nY))
+        #ax1.set_title('Linear position-velocity curve')
+        ax2.set_xlabel('t (s)')
+        
+        ax1.set_ylabel('Motor Number')
+        ax2.set_ylabel('Velocity')
+        
+        plt.suptitle('Master Equation Solution with Linear Position-Velocity. MFPT='+str(obj.mfpt))
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        
+        #plt.show()
