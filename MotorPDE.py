@@ -8,19 +8,19 @@ Trying to apply upwind/downwind to our problem.
 The equation I derived is ...see below
 """
 
-#import time
-import matplotlib
+import time
+#import matplotlib
 
 #import matplotlib.pyplot as plt
 import numpy as np
 
 
 from scipy.integrate import solve_ivp
-from scipy.interpolate import interp1d
+#from scipy.interpolate import interp1d
 
 import libMotorPDE as lib
 
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 
 class MotorPDE(object):
@@ -28,6 +28,8 @@ class MotorPDE(object):
     def __init__(self,**kwargs):
 
         defaults = {'N':100,
+                    'N2':100,
+                    'margin':3,
                     'dt':.0005,
                     'U':None,
                     'alpha':14,
@@ -35,63 +37,145 @@ class MotorPDE(object):
                     'zeta':1,
                     'A0':-1,
                     'A':5,
-                    'B':5.5,
+                    'B':5.1,
                     'T':10,
-                    'use_storage':True,
-                    'ivp_method':'RK23',
+                    'fn_test_option':'root_cos',
+                    'fn_vel':50,
+                    'store_position':False,
+                    'ivp_method':'euler',
                     'source':True,
+                    'regularized':False,
                     'testing_ss':False,
                     'init_pars':None,
-                    'domain':None}
+                    'domain':None,
+                    'irregular':False}
 
+        
         # define defaults if not defined in kwargs
         for (prop, default) in defaults.items():
             setattr(self, prop, kwargs.get(prop, default))
 
-        
+        #print('source type',self.source)
         assert(self.A < self.B)
         assert(self.A0 <= self.A)
         #assert(self.U is not None)
         
-        self.dx = (self.B-self.A0)/self.N
-        
-        self.x = np.linspace(self.A0,self.B,self.N)
-        
+        #self.dx = (self.B-self.A0)/self.N
+
+
+
+        self.x,self.dx = np.linspace(self.A0,self.B,self.N,
+                                     endpoint=False,retstep=True)
+
+        #self.dx = np.zeros(len(self.x)-1) + self.dx
+        print('NOTE: added 1 to delta_idxs in source')
         # index of position A
-        self.A_idx = np.argmin(np.abs(self.x-self.A))
-        
+        #print('NOTE: added 1 to source index')
+        self.A_idx = np.argmin(np.abs(self.x-(self.A)))
+
         # index of position B
         self.B_idx = np.argmin(np.abs(self.x-self.B))
+        
+        #print(self.irregular)
+        if self.irregular:
+            # introduce fine mesh at A_idx
+            N2 = self.N2
+            
+            if type(self.margin) is int:
+                margin = self.margin
+            
+                idx_0 = self.A_idx-margin
+            else:
+                idx_0 = int(self.margin/self.dx)
+            #idx_f = self.N #self.A_idx+margin
+            
+            #print(self.A_idx,self.N,self.N2,idx_0,idx_f)
+            
+            #assert(idx_f < self.N)
+            
+            #print(idx_0,idx_f)
+            
+            self.x_left = self.x[:idx_0]
+            #self.x_mid = np.linspace(self.x[idx_0],self.x[idx_f],
+            #                         N2,endpoint=False)
+            
+            self.x_right = np.linspace(self.x[idx_0],self.x[-1],
+                                       N2,endpoint=False)
+            
+            #self.x_right = self.x[idx_f:]
+            
+            self.x_final = np.zeros(len(self.x_left)+len(self.x_right))
+            
+            #print(idx_0,idx_f)
+            
+            self.x_final[:idx_0] = self.x_left
+            #self.x_final[idx_0:idx_0+N2] = self.x_mid
+            #self.x_final[idx_0+N2:] = self.x_right
+            self.x_final[idx_0:] = self.x_right
+            
+            #print(self.x_final[idx_0-10:idx_0+10])
+            
+            self.x = self.x_final
+            #self.dx = np.zeros_like(self.x)
+            #self.dx[1:] = np.diff(self.x_final)
+            #self.dx[0] = self.dx[1]
+            self.dx = np.diff(self.x_final)
+            
+            self.A_idx = np.argmin(np.abs(self.x-self.A))
+        
+            # index of position B
+            self.B_idx = np.argmin(np.abs(self.x-self.B))
+                
+          
+            #print(self.dx)
         
         #self.CFL = np.abs(self.U)*self.dt/self.dx
         #rint("CFL=",np.abs(self.U)*self.dt/self.dx)
         
-        self.TN = int(self.T/self.dt)  # time discretization
         
-        self.t = np.linspace(0,self.T,self.TN)
-        
-        self.idx_full = np.arange(self.N)
+        self.idx_full = np.arange(len(self.x))
         
         # indices of all points except appropriate boundary
-        self.idx_except_last = self.idx_full[:-1]  # [0,1,2,3,4,5,6,7] to [0,1,2,3,4,5,6]
-        self.idx_except_first = self.idx_full[1:]  # [0,1,2,3,4,5,6,7] to [1,2,3,4,5,6,7]
+        # [0,1,2,3,4,5,6,7] to [0,1,2,3,4,5,6]
+        self.idx_except_last = self.idx_full[:-1]
+        
+        # [0,1,2,3,4,5,6,7] to [1,2,3,4,5,6,7]
+        self.idx_except_first = self.idx_full[1:]
         self.idx_A2B = self.idx_full[self.A_idx:self.B_idx]
         
-        self.roll_next = np.roll(self.idx_full,-1)[:-1]  # [0,1,2,3,4,5,6,7] to [1,2,3,4,5,6,7]
-        self.roll_prev = np.roll(self.idx_full,1)[1:]  # [0,1,2,3,4,5,6,7] to [0,1,2,3,4,5,6]
+        # [0,1,2,3,4,5,6,7] to [1,2,3,4,5,6,7]
+        self.roll_next = np.roll(self.idx_full,-1)[:-1]
+
+        # [0,1,2,3,4,5,6,7] to [0,1,2,3,4,5,6]
+        self.roll_prev = np.roll(self.idx_full,1)[1:]
         
-        if not(self.use_storage) and self.ivp_method == 'euler':
+        self.TN = int(self.T/self.dt) # time discretization
+        
+        if not(self.store_position) and self.ivp_method == 'euler':
             TN = 1
         else:
             TN = self.TN
+
             
         self.t = np.linspace(0,self.T,TN)
-        self.sol = np.zeros((TN,self.N))
+        self.sol = np.zeros((TN,len(self.x)))
         self.U_arr = np.zeros(TN)
-        
-        
-        
-        
+
+        if self.regularized:
+            # regularized delta function
+            s = (self.A-self.A0)/self.dx
+            i = np.floor(s) # floor index of A
+            r = s-i # distance from floor in index
+            
+            
+            self.delta_idxs = np.mod(np.arange(i-2,i+1+1,1),self.N)+1
+            self.delta_idxs = self.delta_idxs.astype(int)
+            q = np.sqrt(1+4*r*(1-r))
+            self.ws = np.array([(3-2*r-q)/8,
+                                (3-2*r+q)/8,
+                                (1+2*r+q)/8,
+                                (1+2*r-q)/8])
+
     def boundary_left(self,U,sol):
         """
         left boundary condition changes depending on sign of U
@@ -122,7 +206,8 @@ class MotorPDE(object):
 
     def run(self):
         """
-        decides on which integration scheme to use based on user option (self.ivp_method)
+        decides on which integration scheme to use 
+        based on user option (self.ivp_method)
         """
 
         
@@ -131,7 +216,8 @@ class MotorPDE(object):
             self.init = np.zeros_like(self.x)
 
         elif self.init_pars['type'] == 'gaussian':
-            self.init = lib.gauss(self.x-(self.A0+self.B)/2,sig=self.init_pars['pars'])
+            self.init = lib.gauss(self.x-(self.A0+self.B)/2,
+                                  sig=self.init_pars['pars'])
 
         self.sol[0,:] = self.init
         
@@ -139,7 +225,8 @@ class MotorPDE(object):
             self.sol = self.run_euler()
         
         else:
-            obj_integrated = solve_ivp(self.upwind,[0,self.T],self.init,args=(self.U,),
+            obj_integrated = solve_ivp(self.upwind,[0,self.T],
+                                       self.init,args=(self.U,),
                                        t_eval=self.t,
                                        method=self.ivp_method)
             self.sol = obj_integrated.y.T
@@ -150,17 +237,19 @@ class MotorPDE(object):
         self.i = 0
         
         while self.i < (self.TN-1):
+
             
             if self.U == 'dynamic':
                 # generate population distribution from sol
                 # draw from population distribution
-                if np.sum(self.sol[self.i,:]) != 0:
-                    xs = lib.inverse_transform_sampling(self,self.sol[self.i,:],100)
+                if np.add.reduce(self.sol[self.i,:]) != 0:
+                    xs = lib.inverse_transform_sampling(self,
+                                                        self.sol[self.i,:],100)
                 else:
                     xs = np.zeros(100)
                 
                 # get total force
-                f_up = np.sum(lib.force_position(xs))*self.dx
+                f_up = np.add.reduce(lib.force_position(xs))*self.dx
                 #print(f_up)
                 f_down = 0
                 
@@ -173,9 +262,10 @@ class MotorPDE(object):
             else:
                 Uval = self.U
             
-            k_next, k_now = lib.get_time_index(self.use_storage,self.i)
+            k_next, k_now = lib.get_time_index(self.store_position,self.i)
             
             sol_now = self.sol[k_now,:]
+            
             
             self.sol[k_next,:] = sol_now + self.dt*(self.upwind(self.t[k_now],
                                                                 sol_now,
@@ -192,42 +282,102 @@ class MotorPDE(object):
         """
         
         out = np.zeros_like(sol)
-        
+        #print(self.dx)
         #print(t,U)
         if callable(U):
-            Uval = U(t)
+            Uval = U(t,vel=self.fn_vel,option=self.fn_test_option)
         elif isinstance(U,float) or isinstance(U,int):
             Uval = U
             
-        if self.ivp_method == 'euler' and self.use_storage:
+        if self.ivp_method == 'euler' and self.store_position:
             self.U_arr[self.i] = Uval
             
         if Uval > 0:
             # boundaries
             idx_update = self.idx_except_first
-            out[0] = -self.beta*sol[0]-sol[0]*Uval/self.dx
+            if self.irregular:
+                dx = self.dx[0]
+            else:
+                dx = self.dx
+            out[0] = -self.beta*sol[0]-sol[0]*Uval/dx
             
         else:
             # boundaries
             idx_update = self.idx_except_last
-            out[-1] = -self.beta*sol[-1]+sol[-1]*Uval/self.dx
+            if self.irregular:
+                dx = self.dx[-1]
+            else:
+                dx = self.dx
+            out[-1] = -self.beta*sol[-1]+sol[-1]*Uval/dx
         
-        U_minus = np.amin([Uval,0])
-        U_plus = np.amax([Uval,0])
+        if Uval <= 0:
+            U_minus = Uval
+            U_plus = 0
+        else:
+            U_minus = 0
+            U_plus = Uval
+        #U_minus = np.amin([Uval,0])
+        #U_plus = np.amax([Uval,0])
         
         p_plus = (sol[self.roll_next]-sol[self.idx_except_last])/self.dx
         p_minus = (sol[self.idx_except_first]-sol[self.roll_prev])/self.dx
         
         # update derivatives
-        out[idx_update] = -self.beta*(sol[idx_update]) - p_plus*U_minus - p_minus*U_plus
+        wind = p_plus*U_minus + p_minus*U_plus
+        out[idx_update] = -self.beta*(sol[idx_update]) - wind
 
-        self.theta_n = np.sum(sol)*self.dx
+        self.theta_n = np.add.reduce(sol[1:]*self.dx)
         #assert((self.theta_n <= 1) and (self.theta_n >= 0))
         
         # update input
-        if self.source:
-            out[self.A_idx] += self.alpha*(1-self.theta_n)/self.dx
+        if (self.source == True or self.source == 'motor')\
+            and self.regularized == False:
+            if self.irregular:
+                dx = self.dx[self.A_idx]
+            else:
+                dx = self.dx
+            #print(dx,self.dx,self.irregular,self.alpha*(1-self.theta_n)/dx)
+            out[self.A_idx] += self.alpha*(1-self.theta_n)/dx
+            
+        elif (self.source == True or self.source == 'motor')\
+            and self.regularized == True:
+            if self.irregular:
+                dx = self.dx[self.delta_idxs]
+            else:
+                dx = self.dx
+                
+            out[self.delta_idxs] += self.ws*self.alpha*(1-self.theta_n)/dx
+            
+            # Gaussian source
+            #sig = .3
+            #k = self.alpha*(1-self.theta_n)/(sig*np.sqrt(2*np.pi))
+            #out[self.idx_full] += k*np.exp(-0.5*(self.x-self.A)**2/sig**2)
+
+        elif callable(self.source) and self.regularized == True:
+            if self.irregular:
+                dx = self.dx[self.A_idx]
+            else:
+                dx = self.dx
+            out[self.delta_idxs] += self.ws*self.source(t)/dx
+
+        elif callable(self.source) and self.regularized == False:
+            if self.irregular:
+                dx = self.dx[self.A_idx]
+            else:
+                dx = self.dx
+            out[self.A_idx] += self.source(t)/dx
         
+        elif self.source == False:
+            pass
+        
+        else:
+            raise ValueError('Unrecognized source option',self.source,
+                             self.regularized)
+            
+        #elif self.source == 'regularized_custom':
+        #    #print(self.source(t))
+        #    out[self.delta_idxs] += self.ws*self.source(t)/self.dx
+
         return out
     
     
