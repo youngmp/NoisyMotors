@@ -547,7 +547,7 @@ def langevin_vs_agents(recompute_agents=False,
     kwargs = dict(kwargs,**pset.parset('figure1'))
     kwargs['store_position'] = True
 
-    f_switch_agents = 'switch_agents.txt'
+    f_switch_agents = 'data/switch_agents.txt'
     file_does_not_exist = not(os.path.isfile(f_switch_agents))
 
     if recompute_agents or file_does_not_exist:
@@ -560,19 +560,19 @@ def langevin_vs_agents(recompute_agents=False,
         Z = a.Z
         
         np.savetxt(f_switch_agents,a.switch_times)
-        np.savetxt('t.txt',a.t)
-        np.savetxt('V.txt',a.V)
-        np.savetxt('Z.txt',a.Z)
+        np.savetxt('data/t.txt',a.t)
+        np.savetxt('data/V.txt',a.V)
+        np.savetxt('data/Z.txt',a.Z)
         
     else:
         switch_agents = np.loadtxt(f_switch_agents)
-        t_agents = np.loadtxt('t.txt')
-        V = np.loadtxt('V.txt')
-        Z = np.loadtxt('Z.txt')
+        t_agents = np.loadtxt('data/t.txt')
+        V = np.loadtxt('data/V.txt')
+        Z = np.loadtxt('data/Z.txt')
 
     mfpt_agents = np.mean(np.diff(switch_agents))
 
-    f_switch_lan = 'switch_lan.txt'
+    f_switch_lan = 'data/switch_lan.txt'
     file_does_not_exist = not(os.path.isfile(f_switch_lan))
     
     # langevin simulation
@@ -589,14 +589,14 @@ def langevin_vs_agents(recompute_agents=False,
         V_lan = sol_langevin
         
         np.savetxt(f_switch_lan,switch_times)
-        np.savetxt('t_lan.txt',t_lan)
-        np.savetxt('V_lan.txt',sol_langevin)
+        np.savetxt('data/t_lan.txt',t_lan)
+        np.savetxt('data/V_lan.txt',sol_langevin)
         #np.savetxt('Z.txt',a.Z)
         
     else:
         switch_times = np.loadtxt(f_switch_lan)
-        t_lan = np.loadtxt('t_lan.txt')
-        V_lan = np.loadtxt('V_lan.txt')
+        t_lan = np.loadtxt('data/t_lan.txt')
+        V_lan = np.loadtxt('data/V_lan.txt')
 
     
     mfpt_lan = np.mean(np.diff(switch_times))
@@ -617,12 +617,12 @@ def langevin_vs_agents(recompute_agents=False,
     cut_f = -int(1)
     counts, bins, bars = ax21.hist(V[cut_s:cut_f],bins=40,
                                    density=True,label='Density')
-    np.savetxt('counts.csv',counts)
-    np.savetxt('bins.csv',bins)
+    np.savetxt('data/counts.csv',counts)
+    np.savetxt('data/bins.csv',bins)
 
     # get steady-state langevin and plot
-    bins = np.loadtxt('bins.csv')[:-1]
-    counts = np.loadtxt('counts.csv')
+    bins = np.loadtxt('data/bins.csv')[:-1]
+    counts = np.loadtxt('data/counts.csv')
 
     out = curve_fit(fit_langevin.ps,bins,counts,50)
     sigma = out[0]
@@ -642,8 +642,8 @@ def langevin_vs_agents(recompute_agents=False,
     ax22.plot(x,fit_langevin.ps(x,sigma),color='tab:orange',
               label=r'$p_s$')
     
-    np.savetxt('counts_lan.csv',counts2)
-    np.savetxt('bins_lan.csv',bins2)
+    np.savetxt('data/counts_lan.csv',counts2)
+    np.savetxt('data/bins_lan.csv',bins2)
 
     mfpt1 = np.round(mfpt_agents,2)
     mfpt2 = np.round(mfpt_lan,2)
@@ -816,8 +816,8 @@ def master_vs_agents(recompute_agents=False,
     parset_name = 'figure1'
     kwargs = dict(kwargs,**pset.parset(parset_name))
 
-    f_switch_agents = 'switch_agents_'+parset_name+'.txt'
-    f_counts_agents = 'counts_'+parset_name+'.csv'
+    f_switch_agents = 'data/switch_agents_'+parset_name+'.txt'
+    f_counts_agents = 'data/counts_'+parset_name+'.csv'
     file_does_not_exist = not(os.path.isfile(f_counts_agents))
     
     if recompute_agents or file_does_not_exist:
@@ -830,8 +830,8 @@ def master_vs_agents(recompute_agents=False,
         Z = a.Z[::10]
         
         np.savetxt(f_switch_agents,a.switch_times)
-        np.savetxt('t_agents_'+parset_name+'.txt',t_agents)
-        np.savetxt('V_agents_'+parset_name+'.txt',V)
+        np.savetxt('data/t_agents_'+parset_name+'.txt',t_agents)
+        np.savetxt('data/V_agents_'+parset_name+'.txt',V)
         #np.savetxt('Z_agents_'+parset_name+'.txt',a.Z)
         
         cut_s = int(0)
@@ -839,16 +839,16 @@ def master_vs_agents(recompute_agents=False,
         counts, bins, bars = ax21.hist(V[cut_s:cut_f],bins=40,
                                        density=True,label='Density')
         np.savetxt(f_counts_agents,counts)
-        np.savetxt('bins_'+parset_name+'.csv',bins)
+        np.savetxt('data/bins_'+parset_name+'.csv',bins)
 
         
     else:
         switch_agents = np.loadtxt(f_switch_agents)
-        t_agents = np.loadtxt('t_agents_'+parset_name+'.txt')
-        V = np.loadtxt('V_agents_'+parset_name+'.txt')
+        t_agents = np.loadtxt('data/t_agents_'+parset_name+'.txt')
+        V = np.loadtxt('data/V_agents_'+parset_name+'.txt')
         #Z = np.loadtxt('Z_agents_'+parset_name+'.txt')
         counts = np.loadtxt(f_counts_agents)
-        bins = np.loadtxt('bins_'+parset_name+'.csv')[:-1]
+        bins = np.loadtxt('data/bins_'+parset_name+'.csv')[:-1]
 
     mfpt_agents = np.mean(np.diff(switch_agents))
 
@@ -867,8 +867,8 @@ def master_vs_agents(recompute_agents=False,
     
     opt = dict(opt,**pset.parset(parset_name))
 
-    f_switch_master = 'switch_master_'+parset_name+'.txt'
-    f_counts_master = 'counts_master'+parset_name+'.txt'
+    f_switch_master = 'data/switch_master_'+parset_name+'.txt'
+    f_counts_master = 'data/counts_master'+parset_name+'.txt'
     
     file_does_not_exist = not(os.path.isfile(f_counts_master))
     
@@ -883,8 +883,8 @@ def master_vs_agents(recompute_agents=False,
         V_master = am.V
         
         np.savetxt(f_switch_master,switch_master)
-        np.savetxt('t_master_'+parset_name+'.txt',t_master[::20])
-        np.savetxt('V_master_'+parset_name+'.txt',V_master[::20])
+        np.savetxt('data/t_master_'+parset_name+'.txt',t_master[::20])
+        np.savetxt('data/V_master_'+parset_name+'.txt',V_master[::20])
         #np.savetxt('Z.txt',a.Z)
 
         cut1 = int(len(t_master)/2)
@@ -893,12 +893,12 @@ def master_vs_agents(recompute_agents=False,
                                           label='Density')
 
         np.savetxt(f_counts_master,counts)
-        np.savetxt('bins_master_'+parset_name+'.csv',bins)
+        np.savetxt('data/bins_master_'+parset_name+'.csv',bins)
         
     else:
         switch_master = np.loadtxt(f_switch_master)
-        t_master = np.loadtxt('t_master_'+parset_name+'.txt')
-        V_master = np.loadtxt('V_master_'+parset_name+'.txt')
+        t_master = np.loadtxt('data/t_master_'+parset_name+'.txt')
+        V_master = np.loadtxt('data/V_master_'+parset_name+'.txt')
 
         cut1 = int(len(t_master)/2)
         counts2, bins2, bars2 = ax22.hist(V_master[cut1:],bins=40,
