@@ -19,7 +19,7 @@ from scipy.optimize import curve_fit
 from mpl_toolkits.mplot3d import proj3d
 from matplotlib.patches import FancyArrowPatch
 
-from get_mfpts import get_mfpts
+from lib.get_mfpts import get_mfpts
 import lib.test_agents as test_agents
 import lib.libMotorPDE as lmpde
 from lib.lubrication import lubrication
@@ -1543,11 +1543,11 @@ def main():
     # listed in order of Figures in paper
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
-        #(cylinder,[],['f_cylinder.pdf']),
-        #(agent_example,[],['f_agent_example.pdf']),
+        (cylinder,[],['f_cylinder.pdf']),
+        (agent_example,[],['f_agent_example.pdf']),
         
-        #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
-        #(motor_distributions,[],['f_motor_distribution.pdf']),
+        (langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
+        (motor_distributions,[],['f_motor_distribution.pdf']),
         (master_vs_agents,[],['f_master_vs_agents.pdf']),
         
         (mva_time,[],['f_mva_time.pdf']),
