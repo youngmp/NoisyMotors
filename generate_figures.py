@@ -909,7 +909,7 @@ def master_vs_agents(recompute_agents=False,
                                           label='Density')
 
         counts2 = np.loadtxt(f_counts_master)
-        bins2 = np.loadtxt('bins_master_'+parset_name+'.csv')[:-1]
+        bins2 = np.loadtxt('data/bins_master_'+parset_name+'.csv')[:-1]
 
 
     mfpt_master = np.mean(np.diff(switch_master))
