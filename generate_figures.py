@@ -1043,7 +1043,7 @@ def mva_time():
     #           5000]
     print(nx_list)
 
-    path = "../cluster_data/figure1_times"
+    path = "data/cluster_data/figure1_times"
     #options = ['nX=100','dt=1e-06','T=10','.txt']
 
     mean_master = []
