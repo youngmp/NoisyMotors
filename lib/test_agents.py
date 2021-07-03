@@ -12,6 +12,10 @@ test functions for agents
 import argparse
 
 import os
+import sys
+
+sys.path.append('..')
+
 import time,datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,7 +29,7 @@ from Master import Master
 from agents import Agents
 import parsets as pset
 
-from test_MotorPDE import fn_test
+from .test_MotorPDE import fn_test
 
 
 import matplotlib.animation as manimation
