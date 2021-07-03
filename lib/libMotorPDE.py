@@ -10,7 +10,7 @@ import time
 from numpy.linalg import norm
 #from scipy.interpolate import interp1d
 
-from interp_basic import interp_basic as interpb
+from .interp_basic import interp_basic as interpb
 #from cumsumb import cumsum
 
 

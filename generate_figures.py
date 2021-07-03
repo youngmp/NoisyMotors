@@ -26,7 +26,7 @@ from lib.lubrication import lubrication
 from agents import Agents
 from Master import Master
 import fit_langevin
-import telegraph
+import lib.telegraph
 
 import matplotlib as mpl
 plt.rc('text', usetex=True)
