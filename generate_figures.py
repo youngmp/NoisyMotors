@@ -1165,7 +1165,7 @@ def switch_distributions():
 
     # load agents MFPT
     #path = '../julia/mfpt1a'
-    path = '../julia/mfptfigure1'
+    path = './julia/mfptfigure1'
     options = ['nX=100','dt=1.0e-07','.txt']
     diffs = False
 
@@ -1173,7 +1173,7 @@ def switch_distributions():
     
     # load master MFPT
     #path = "../cluster_data/p1/a"
-    path = "../cluster_data/figure1"
+    path = "data/cluster_data/figure1"
     #options = []
     options = ['nX=100','dt=1e-06','T=10','.txt']
     diffs = True
