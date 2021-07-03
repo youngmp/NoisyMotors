@@ -890,8 +890,9 @@ def master_vs_agents(recompute_agents=False,
         np.savetxt('data/V_master_'+parset_name+'.txt',V_master[::20])
         #np.savetxt('Z.txt',a.Z)
 
-        cut1 = int(len(t_master)/2)
-        counts2, bins2, bars2 = ax22.hist(V_master[cut1:],bins=40,
+        cut1 = 0
+        cut1 = int(len(V_master)/1.35)
+        counts2, bins2, bars2 = ax22.hist(V_master[cut1:cut2],bins=40,
                                           density=True,
                                           label='Density')
 
@@ -903,8 +904,9 @@ def master_vs_agents(recompute_agents=False,
         t_master = np.loadtxt('data/t_master_'+parset_name+'.txt')
         V_master = np.loadtxt('data/V_master_'+parset_name+'.txt')
 
-        cut1 = int(len(t_master)/2)
-        counts2, bins2, bars2 = ax22.hist(V_master[cut1:],bins=40,
+        cut1 = 0
+        cut2 = int(len(V_master)/1.35)
+        counts2, bins2, bars2 = ax22.hist(V_master[cut1:cut2],bins=40,
                                           density=True,
                                           label='Density')
 
