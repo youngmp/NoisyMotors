@@ -555,6 +555,7 @@ def langevin_vs_agents(recompute_agents=False,
         a.run_agents()
         
         switch_agents = a.switch_times
+        switch_agents = np.asarray(switch_agents)
         t_agents = a.t
         V = a.V
         Z = a.Z
@@ -586,6 +587,7 @@ def langevin_vs_agents(recompute_agents=False,
                                                  switch_vel=kwargs['switch_v'],
                                                  kwargs=kwargs)
 
+        
         V_lan = sol_langevin
         
         np.savetxt(f_switch_lan,switch_times)
@@ -608,6 +610,7 @@ def langevin_vs_agents(recompute_agents=False,
     ax11.plot(t_agents[:cut1],V[:cut1])
 
     t_last = t_agents[cut1]
+
     ax11.scatter(switch_agents[switch_agents<t_last],
                  np.zeros(len(switch_agents[switch_agents<t_last])),
                  color='tab:red',alpha=0.7,s=30)
@@ -1540,8 +1543,8 @@ def main():
     # listed in order of Figures in paper
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
-        (cylinder,[],['f_cylinder.pdf']),
-        (agent_example,[],['f_agent_example.pdf']),
+        #(cylinder,[],['f_cylinder.pdf']),
+        #(agent_example,[],['f_agent_example.pdf']),
         (langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
         (motor_distributions,[],['f_motor_distribution.pdf']),
         (master_vs_agents,[],['f_master_vs_agents.pdf']),
