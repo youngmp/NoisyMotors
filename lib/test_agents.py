@@ -41,27 +41,27 @@ import matplotlib as mpl
 
 #mpl.use("Agg")
 
-
-import platform
-from pathlib import Path
-
 # operating system
 sys = platform.system()
 
 if sys  == 'Darwin':
     home = str(Path.home())
-    DIR = home+'/tests/'
+    #DIR = home+'/tests/'
+    DIR = './tests'
     #print(os.path.isdir(DIR))
 elif sys == 'Windows':
-    DIR = 'C:/tests/'
+    DIR = './tests'#'C:/tests/'
 elif sys == 'Linux':
     home = str(Path.home())
-    DIR = home+'/tests/'
+    DIR = './tests'#home+'/tests/'
 
 if not(os.path.isdir(DIR)):
-    print('Missing tests folder at', DIR)
-    input('Press enter to create and proceed')
+    #print('Missing tests folder at', DIR)
+    #input('Press enter to create and proceed')
     os.mkdir(DIR)
+
+import platform
+from pathlib import Path
     
 pi = np.pi
 exp = np.exp
@@ -578,6 +578,10 @@ if False:
 
 
 def main():
+    
+
+
+    
     #steady_state(42,opt)
     #mean_force(opt)
     #mean_pos(opt)
