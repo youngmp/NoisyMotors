@@ -1340,10 +1340,10 @@ def mfpt_translocation(recompute=False):
     r_prob_list = []
 
 
-    fname_a = './data/plot_data_m.txt'
-    fname_m = './data/plot_data_a.txt'
+    fname1 = './data/plot_data1.txt'
+    fname2 = './data/plot_data2.txt'
     
-    file_not_found = not(os.path.isfile(fname_m))
+    file_not_found = not(os.path.isfile(fname1))
     
     if recompute or file_not_found:
 
@@ -1401,10 +1401,10 @@ def mfpt_translocation(recompute=False):
         plot_data[:,2] = r_mean_list
         plot_data[:,3] = r_std_list 
 
-        np.savetxt(fname_m,plot_data)
+        np.savetxt(fname1,plot_data)
 
     else:
-        plot_data = np.loadtxt(fname_m)
+        plot_data = np.loadtxt(fname1)
             
     
     # plot probability to escape
@@ -1431,7 +1431,7 @@ def mfpt_translocation(recompute=False):
 
     print('========================')
 
-    file_not_found = not(os.path.isfile(fname_a))
+    file_not_found = not(os.path.isfile(fname2))
     
     if recompute or file_not_found:
 
@@ -1485,12 +1485,12 @@ def mfpt_translocation(recompute=False):
         plot_data_a[:,2] = r_mean_list
         plot_data_a[:,3] = r_std_list 
 
-        np.savetxt(fname_a,plot_data)
+        np.savetxt(fname2,plot_data_a)
 
 
     else:
 
-        plot_data_a = np.loadtxt(fname_a)
+        plot_data_a = np.loadtxt(fname2)
     
     ax21.plot(L_domain,telegraph.e0p(L_domain,121,1/.22))
 
