@@ -795,7 +795,7 @@ def motor_distributions(recompute=False):
 
 
 def master_vs_agents(recompute_agents=False,
-                     recompute_master=False):
+                     recompute_master=True):
 
     #fig = plt.figure(figsize=(FIGWIDTH_PX/MY_DPI,850*5/8/MY_DPI))
     fig = plt.figure(figsize=(8,5))
