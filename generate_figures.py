@@ -21,7 +21,7 @@ from matplotlib.patches import FancyArrowPatch
 
 from get_mfpts import get_mfpts
 import lib.test_agents as test_agents
-import lib.libMotorPDE as lib
+import lib.libMotorPDE as lmpde
 from lib.lubrication import lubrication
 from agents import Agents
 from Master import Master
@@ -710,8 +710,8 @@ def motor_distributions(recompute=False):
     x1 = np.linspace(0,5,100)
     x2 = np.linspace(5,5.05,20)
 
-    ground_truthX = lib.phi(x1,-opt['switch_v'],a)
-    ground_truthY = lib.phi(x2,opt['switch_v'],a)
+    ground_truthX = lmpde.phi(x1,-opt['switch_v'],a)
+    ground_truthY = lmpde.phi(x2,opt['switch_v'],a)
 
     fname_xbins = 'data/xbins.txt'
     fname_ybins = 'data/ybins.txt'
