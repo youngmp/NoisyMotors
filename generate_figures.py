@@ -26,7 +26,7 @@ from lib.lubrication import lubrication
 from agents import Agents
 from Master import Master
 import fit_langevin
-import lib.telegraph
+import lib.telegraph as telegraph
 
 import matplotlib as mpl
 plt.rc('text', usetex=True)
@@ -1292,6 +1292,8 @@ def get_translocations(path,options,args=3,skipn=1):
 
                 fnames.append(fname)
 
+    #print(fnames)
+
     if 'L=800' in options:
         cutoff1 = 10000
         cutoff2 = len(fnames)
@@ -1304,13 +1306,22 @@ def get_translocations(path,options,args=3,skipn=1):
     translocation_data = np.zeros((len(fnames[cutoff1:cutoff2:skipn]),args))
     
     for i,fname in enumerate(fnames[cutoff1:cutoff2:skipn]):
-        
+
+        #print(i,fname,os.path.isfile(fname))
         translocation_data[i,:] = np.loadtxt(fname)
                 
     return translocation_data
 
 
-def mfpt_translocation():
+def mfpt_translocation(recompute=False):
+    """
+    this cluster data is only available offline.
+    I saved the plot data to save space on the repository.
+    This should be enough.
+
+    If there is a need for the data from the cluster, please contact
+    ympark1988@gmail.com
+    """
 
     fig = plt.figure(figsize=(8,5))
     ax11 = fig.add_subplot(221)
@@ -1328,66 +1339,85 @@ def mfpt_translocation():
     r_std_list = []
     r_prob_list = []
 
-    # top row figure data
-    for z0 in z0_list:
-        # load all files into single array for each Z0
-        data = get_translocations('../cluster_data/figure1_translocation',
-                                  ['Z0='+str(z0),'dt=3e-06'])
 
-        # average time to cross rigth
-        #print(data)
-        cr_idx = np.where(data[:,-1]==200)[0]
-        r_mean = np.mean(data[cr_idx,1])
-        r_std = np.std(data[cr_idx,1])
+    fname_a = './data/plot_data_m.txt'
+    fname_m = './data/plot_data_a.txt'
+    
+    file_not_found = not(os.path.isfile(fname_m))
+    
+    if recompute or file_not_found:
 
-        cl_idx = np.where(data[:,-1]==0)[0]
-        l_mean = np.mean(data[cl_idx,1])
+        # top row figure data
+        for z0 in z0_list:
+            # load all files into single array for each Z0
+            data = get_translocations('../cluster_data/figure1_translocation',
+                                      ['Z0='+str(z0),'dt=3e-06'])
 
-        #if z0 == 0:
-        #    print(cr_idx[:10])
-        #    print(data[cr_idx[:10],:])
+            # average time to cross rigth
+            #print(data)
+            cr_idx = np.where(data[:,-1]==200)[0]
+            r_mean = np.mean(data[cr_idx,1])
+            r_std = np.std(data[cr_idx,1])
 
-        assert(len(cl_idx) + len(cr_idx) == len(data[:,-1]))
+            cl_idx = np.where(data[:,-1]==0)[0]
+            l_mean = np.mean(data[cl_idx,1])
 
-        mean_tloc_both = np.mean(data[:,1])
-        mean_switch_number_both = np.mean(data[:,0])
+            #if z0 == 0:
+            #    print(cr_idx[:10])
+            #    print(data[cr_idx[:10],:])
 
-        mean_tloc_r = np.mean(data[cr_idx,1])
-        mean_switch_number_r = np.mean(data[cr_idx,0])
+            #assert(len(cl_idx) + len(cr_idx) == len(data[:,-1]))
 
-        mean_tloc_l = np.mean(data[cl_idx,1])
-        mean_switch_number_l = np.mean(data[cl_idx,0])
+            mean_tloc_both = np.mean(data[:,1])
+            mean_switch_number_both = np.mean(data[:,0])
 
-        mean_vel_mfpt = mean_tloc_both/mean_switch_number_both
-        mean_vel_mfpt_r = mean_tloc_r/mean_switch_number_r
-        mean_vel_mfpt_l = mean_tloc_l/mean_switch_number_l
+            mean_tloc_r = np.mean(data[cr_idx,1])
+            mean_switch_number_r = np.mean(data[cr_idx,0])
 
-        r_mean_list.append(r_mean)
-        r_std_list.append(r_std)
-        r_prob_list.append(len(cr_idx)/len(data[:,-1]))
-        
-        print('z0=',z0, 'mfpt to switch vel=',mean_vel_mfpt)
-        #print('\t z0=',z0, 'mfpt to switch vel conditioned on right=',mean_vel_mfpt_r)
-        #print('\t z0=',z0, 'mfpt to switch vel conditioned on left=',mean_vel_mfpt_l)
-        #ax12.errorbar(z0,r_mean,yerr=r_std,color='gray',marker='o')
-        
-        print('\t prob exit left', len(cl_idx)/len(data[:,0]) , 'mean left', l_mean)
-        print('\t prob exit right',len(cr_idx)/len(data[:,0])  ,'mean right', r_mean)
+            mean_tloc_l = np.mean(data[cl_idx,1])
+            mean_switch_number_l = np.mean(data[cl_idx,0])
+
+            mean_vel_mfpt = mean_tloc_both/mean_switch_number_both
+            mean_vel_mfpt_r = mean_tloc_r/mean_switch_number_r
+            mean_vel_mfpt_l = mean_tloc_l/mean_switch_number_l
+
+            r_mean_list.append(r_mean)
+            r_std_list.append(r_std)
+            r_prob_list.append(len(cr_idx)/len(data[:,-1]))
+
+            print('z0=',z0, 'mfpt to switch vel=',mean_vel_mfpt)
+            #print('\t z0=',z0, 'mfpt to switch vel conditioned on right=',mean_vel_mfpt_r)
+            #print('\t z0=',z0, 'mfpt to switch vel conditioned on left=',mean_vel_mfpt_l)
+            #ax12.errorbar(z0,r_mean,yerr=r_std,color='gray',marker='o')
+
+            print('\t prob exit left', len(cl_idx)/len(data[:,0]) , 'mean left', l_mean)
+            print('\t prob exit right',len(cr_idx)/len(data[:,0])  ,'mean right', r_mean)
 
 
-        
+        # z0_list, r_prob_list, r_mean_list
+        plot_data = np.zeros((len(z0_list),4))
+        plot_data[:,0] = z0_list
+        plot_data[:,1] = r_prob_list
+        plot_data[:,2] = r_mean_list
+        plot_data[:,3] = r_std_list 
+
+        np.savetxt(fname_m,plot_data)
+
+    else:
+        plot_data = np.loadtxt(fname_m)
+            
     
     # plot probability to escape
     ax11.plot(x_list,telegraph.pp(x_list,121,lam=1/.2,L=200),label='Analytical')
-    ax11.plot(z0_list,r_prob_list,
+    ax11.plot(plot_data[:,0],plot_data[:,1],
              label='Numerical',color='gray',marker='s',ls='',
              markersize=8,clip_on=False)
 
     # plot MFPT
     ax12.plot(x_list,telegraph.tp(x_list,121,lam=1/.2,L=200),label='Analytical')
 
-    ax12.errorbar(z0_list,r_mean_list,
-                 yerr=r_std_list/np.sqrt(len(r_std_list)),
+    ax12.errorbar(plot_data[:,0],plot_data[:,2],
+                 yerr=plot_data[:,3]/np.sqrt(len(plot_data[:,3])),
                  color='gray',marker='s',label='Numerical',ls='',
                  markersize=8,clip_on=False,elinewidth=2,capsize=5)
 
@@ -1395,82 +1425,84 @@ def mfpt_translocation():
     L_list = [200,400,600,800]
     L_domain = np.linspace(200,800,1000)
 
-
     r_mean_list = []
     r_std_list = []
     r_prob_list = []
 
     print('========================')
+
+    file_not_found = not(os.path.isfile(fname_a))
     
-    # bottom row figure data
-    for L in L_list:
-        # load all files into single array for each Z0
-        if L == 200:
-            data = get_translocations('../cluster_data/figure1_translocation',
-                                      ['Z0=0','dt=3e-06'])
+    if recompute or file_not_found:
 
-        else:
-            data = get_translocations('../cluster_data/figure1_translocation',
-                                      ['L='+str(L),'dt=3e-06'],args=5,
-                                      skipn=1)
+        # bottom row figure data
+        for L in L_list:
+            # load all files into single array for each Z0
+            if L == 200:
+                data = get_translocations('../cluster_data/figure1_translocation',
+                                          ['Z0=0','dt=3e-06'])
 
-        # average time to cross rigth
-        #print(data)
-        #print(data[:,-1])
-        cr_idx = np.where(data[:,2]==L)[0]
-        r_mean = np.mean(data[cr_idx,1])
-        r_std = np.std(data[cr_idx,1])
+            else:
+                data = get_translocations('../cluster_data/figure1_translocation',
+                                          ['L='+str(L),'dt=3e-06'],args=5,
+                                          skipn=1)
 
-        cl_idx = np.where(data[:,2]==0)[0]
-        l_mean = np.mean(data[cl_idx,1])
+            # average time to cross rigth
+            cr_idx = np.where(data[:,2]==L)[0]
+            r_mean = np.mean(data[cr_idx,1])
+            r_std = np.std(data[cr_idx,1])
 
-        #if z0 == 0:
-        #    print(cr_idx[:10])
-        #    print(data[cr_idx[:10],:])
+            cl_idx = np.where(data[:,2]==0)[0]
+            l_mean = np.mean(data[cl_idx,1])
 
-        #print(len(cl_idx), len(cr_idx), len(data[:,-1]))
-        
-        #assert(len(cl_idx) + len(cr_idx) == len(data[:,-1]))
-        
 
-        mean_tloc_both = np.mean(data[:,1])
-        mean_switch_number_both = np.mean(data[:,0])
+            mean_tloc_both = np.mean(data[:,1])
+            mean_switch_number_both = np.mean(data[:,0])
 
-        mean_tloc_r = np.mean(data[cr_idx,1])
-        mean_switch_number_r = np.mean(data[cr_idx,0])
+            mean_tloc_r = np.mean(data[cr_idx,1])
+            mean_switch_number_r = np.mean(data[cr_idx,0])
 
-        mean_tloc_l = np.mean(data[cl_idx,1])
-        mean_switch_number_l = np.mean(data[cl_idx,0])
+            mean_tloc_l = np.mean(data[cl_idx,1])
+            mean_switch_number_l = np.mean(data[cl_idx,0])
 
-        mean_vel_mfpt = mean_tloc_both/mean_switch_number_both
-        mean_vel_mfpt_r = mean_tloc_r/mean_switch_number_r
-        mean_vel_mfpt_l = mean_tloc_l/mean_switch_number_l
+            mean_vel_mfpt = mean_tloc_both/mean_switch_number_both
+            mean_vel_mfpt_r = mean_tloc_r/mean_switch_number_r
+            mean_vel_mfpt_l = mean_tloc_l/mean_switch_number_l
 
-        r_mean_list.append(r_mean)
-        r_std_list.append(r_std)
-        r_prob_list.append(len(cr_idx)/len(data[:,-1]))
-        
-        #print('L=',L, 'mfpt to switch vel=',mean_vel_mfpt)
-        #print('\t z0=',z0, 'mfpt to switch vel conditioned on right=',mean_vel_mfpt_r)
-        #print('\t z0=',z0, 'mfpt to switch vel conditioned on left=',mean_vel_mfpt_l)
-        #ax12.errorbar(z0,r_mean,yerr=r_std,color='gray',marker='o')
+            r_mean_list.append(r_mean)
+            r_std_list.append(r_std)
+            r_prob_list.append(len(cr_idx)/len(data[:,-1]))
 
-        print('L=',L)
-        print('\t prob exit left', len(cl_idx)/len(data[:,0]) , 'mean left', l_mean)
-        print('\t prob exit right',len(cr_idx)/len(data[:,0])  ,'mean right', r_mean)
+            print('L=',L)
+            print('\t prob exit left', len(cl_idx)/len(data[:,0]) , 'mean left', l_mean)
+            print('\t prob exit right',len(cr_idx)/len(data[:,0])  ,'mean right', r_mean)
 
+            
+        # z0_list, r_prob_list, r_mean_list
+        plot_data_a = np.zeros((len(L_list),4))
+        plot_data_a[:,0] = L_list
+        plot_data_a[:,1] = r_prob_list
+        plot_data_a[:,2] = r_mean_list
+        plot_data_a[:,3] = r_std_list 
+
+        np.savetxt(fname_a,plot_data)
+
+
+    else:
+
+        plot_data_a = np.loadtxt(fname_a)
     
     ax21.plot(L_domain,telegraph.e0p(L_domain,121,1/.22))
 
-    ax21.plot(L_list,r_prob_list,
+    ax21.plot(plot_data_a[:,0],plot_data_a[:,1],
               label='Numerical',color='gray',marker='s',ls='',
               markersize=8,clip_on=False)
 
 
     ax22.plot(L_domain,telegraph.t0p(L_domain,121,1/.22))
     
-    ax22.errorbar(L_list,r_mean_list,
-                  yerr=r_std_list/np.sqrt(len(r_std_list)),
+    ax22.errorbar(plot_data_a[:,0],plot_data_a[:,2],
+                  yerr=plot_data_a[:,3]/np.sqrt(len(plot_data_a[:,3])),
                   color='gray',marker='s',label='Numerical',ls='',
                   markersize=8,clip_on=False,elinewidth=2,capsize=5)
 
@@ -1545,16 +1577,16 @@ def main():
     # listed in order of Figures in paper
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
-        (cylinder,[],['f_cylinder.pdf']),
-        (agent_example,[],['f_agent_example.pdf']),
+        #(cylinder,[],['f_cylinder.pdf']),
+        #(agentf_example,[],['f_agent_example.pdf']),
         
-        (langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
-        (motor_distributions,[],['f_motor_distribution.pdf']),
-        (master_vs_agents,[],['f_master_vs_agents.pdf']),
+        #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
+        #(motor_distributions,[],['f_motor_distribution.pdf']),
+        #(master_vs_agents,[],['f_master_vs_agents.pdf']),
         
-        (mva_time,[],['f_mva_time.pdf']),
-        (velocity_mfpts,[],['f_velocity_mfpts.pdf']),
-        (switch_distributions,[],['f_switch_distributions.pdf']),
+        #(mva_time,[],['f_mva_time.pdf']),
+        #(velocity_mfpts,[],['f_velocity_mfpts.pdf']),
+        #(switch_distributions,[],['f_switch_distributions.pdf']),
         
         (mfpt_translocation,[],['f_mfpt_translocation.pdf']),
         
