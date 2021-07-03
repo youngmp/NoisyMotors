@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from numpy.random import uniform
 from math import log10, floor
-from lubrication import lubrication as LB
+from lib.lubrication import lubrication as LB
 from Master import Master as M
 
 import matplotlib as mpl
