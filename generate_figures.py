@@ -21,7 +21,7 @@ from matplotlib.patches import FancyArrowPatch
 
 from get_mfpts import get_mfpts
 import test_agents
-import libMotorPDE as lib
+import lib.libMotorPDE as lib
 from lib.lubrication import lubrication
 from agents import Agents
 from Master import Master

@@ -18,7 +18,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 #from scipy.interpolate import interp1d
 #from cumsumb import cumsum
-import libMotorPDE as lib
+import lib.libMotorPDE as lib
 
 #matplotlib.use('TkAgg')
 

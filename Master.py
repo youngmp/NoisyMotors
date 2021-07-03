@@ -5,9 +5,9 @@ Modified master equation
 
 import argparse
 
-import libMotorPDE as lib
+import lib.libMotorPDE as lib
 #import libMaster as libm
-from libMotorPDE import inverse_transform_sampling as inv_sample
+from lib.libMotorPDE import inverse_transform_sampling as inv_sample
 from MotorPDE import MotorPDE
 
 
