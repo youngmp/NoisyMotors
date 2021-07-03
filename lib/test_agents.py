@@ -41,6 +41,9 @@ import matplotlib as mpl
 
 #mpl.use("Agg")
 
+import platform
+from pathlib import Path
+
 # operating system
 sys = platform.system()
 
@@ -60,8 +63,7 @@ if not(os.path.isdir(DIR)):
     #input('Press enter to create and proceed')
     os.mkdir(DIR)
 
-import platform
-from pathlib import Path
+
     
 pi = np.pi
 exp = np.exp
