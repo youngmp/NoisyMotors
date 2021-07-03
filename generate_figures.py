@@ -807,7 +807,7 @@ def master_vs_agents(recompute_agents=False,
 
     # agent simulation
     kwargs = {'T':11,
-              'V0':0,
+              'V0':50,
               'Z0':0,
               'dt':2e-6,
               'seed':9,
