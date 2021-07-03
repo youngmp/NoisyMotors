@@ -1578,7 +1578,7 @@ def main():
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
         #(cylinder,[],['f_cylinder.pdf']),
-        #(agents_example,[],['f_agent_example.pdf']),
+        #(agent_example,[],['f_agent_example.pdf']),
         
         #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
         #(motor_distributions,[],['f_motor_distribution.pdf']),
