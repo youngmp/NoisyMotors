@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.patches import FancyArrowPatch
 
 from get_mfpts import get_mfpts
-import test_agents
+import lib.test_agents as test_agents
 import lib.libMotorPDE as lib
 from lib.lubrication import lubrication
 from agents import Agents
