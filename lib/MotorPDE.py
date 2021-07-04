@@ -81,11 +81,6 @@ class MotorPDE(object):
 
             self.A_idx = len(x_left)
             self.B_idx = len(self.x)-1
-            print(self.dx[self.A_idx-2])
-            print(self.dx[self.A_idx-1])
-            print(self.dx[self.A_idx])
-            print(self.dx[self.A_idx+1])
-            print(self.dx[self.A_idx+2])
 
             #print(self.x[self.A_idx])
 

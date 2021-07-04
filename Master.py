@@ -8,7 +8,7 @@ import argparse
 import lib.libMotorPDE as lib
 #import libMaster as libm
 from lib.libMotorPDE import inverse_transform_sampling as inv_sample
-from MotorPDE import MotorPDE
+from lib.MotorPDE import MotorPDE
 
 
 import os
@@ -687,7 +687,7 @@ def main():
     fig = plt.figure()
     ax = fig.add_subplot(111)
     
-    ax.plot(a.t,a.V,alpha=.4,label='Velocity')
+    ax.plot(a.t,a.V,alpha=.75,label='Velocity')
     ax.plot([0,a.t[-1]],[121,121],color='gray',zorder=-3,label='QSS')
     ax.plot([0,a.t[-1]],[-121,-121],color='gray',zorder=-3)
     
