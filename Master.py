@@ -599,7 +599,7 @@ class Master(MotorPDE):
                 plot_counter += 1
 
             
-            if False and(self.i % int((self.TN)/10) == 0):
+            if True and(self.i % int((self.TN)/10) == 0):
 
                 t = self.i*self.dt
                 X = self.X[jm]
@@ -654,157 +654,51 @@ class Master(MotorPDE):
 def main():
     
     import matplotlib.pyplot as plt
-
-    """
-    parser = argparse.ArgumentParser(description='run the agent-based '
-                                     'Myosin motor model',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument('-s','--seed',default=0,type=int,
-                        help='Set random number seed for simulation')
-    #parser.add_argument('-z','--zeta',default=0,type=np.float64,help='Set viscous drag')
-
-    parser.add_argument('-T','--Tfinal',default=10,type=np.float64,
-                        help='Set total simulation time')
-    parser.add_argument('-d','--dt',default=0.001,type=np.float64,
-                        help='Set time step factor')
-
-    
-    #parser.add_argument('--save_switch',dest='switch',action='store_true',
-    #                    help='If true, save switching rates')
-    #parser.add_argument('--no-save_switch',dest='switch',action='store_false',
-    #                    help='If true, save switching rates')
-    #parser.set_defaults(switch=False)
-
-    
-    parser.add_argument('--storage',dest='storage',action='store_true',
-                        help=('If true, store all trace'
-                              'data to memory (for plotting)'))
-    parser.add_argument('--no-storage',dest='storage',action='store_false')
-    parser.set_defaults(storage=True)
-
-    parser.add_argument('--ext',dest='ext',action='store_true',
-                        help=('If true, use force extension '
-                              'in preferred direction. '
-                              'else do not udate position in '
-                              'prefeerred direction'))
-    parser.add_argument('--no-ext',dest='ext',action='store_false')
-    parser.set_defaults(ext=True)
-
-    parser.add_argument('-X','--nX',default=100,type=int,
-                        help='Set total motor number (X left preferred)')
-    parser.add_argument('-Y','--nY',default=100,type=int,
-                        help='Set total motor number (Y right preferrred)')
-
-    args = parser.parse_args()
-    print('args',args)
-    
-    d_flags = vars(args)
-    """
     
     # options not from terminal flags
-    options = {'T':.5,
-               'nX':400,'nY':400,
-               'dt':1e-5,
+    options = {'T':.2,
+               'nX':100,'nY':100,
+               'dt':3e-6,
                'seed':0,
-               'zeta':0.7,
-               'A':5,'B':5.1,
+               'zeta':0.4,
+               'V0':50,
+               'A':5,'B':5.05,
                'alpha':14,'beta':126,
-               'p1':4/4,'gamma':0.322,
-               'switch_v':164,'U':164,
-               'X0':10,'Y0':10,
+               'p1':4,'gamma':0.322,
+               'switch_v':121,
+               'X0':10,'Y0':1,
                'A0':0,
                'ivp_method':'euler',
-               'N':200,
-               'N2':150,
-               'margin':2.4,
+               'N':41,
+               'N2':41,
                'source':True,
                'extension':True,
                'store_position':True,
-               'timeout':True}
+               'timeout':True,
+               'irregular':True}
     
-    #kwargs = {**d_flags,**options}
-    kwargs = options
+    a = Master(**options)
+    
+    t0 = time.time()
+    a.run_master()
+    t1 = time.time()
+    print('*\t Run time',t1-t0)        
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    ax.plot(a.t,a.V,alpha=.4,label='Velocity')
+    ax.plot([0,a.t[-1]],[121,121],color='gray',zorder=-3,label='QSS')
+    ax.plot([0,a.t[-1]],[-121,-121],color='gray',zorder=-3)
+    
+    
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Velocity')
 
-    a = Master(**kwargs)
+    ax.legend()
 
-    # load MFPT data if it exists
-    fname = 'data/mfpt_'+lib.fname_suffix(ftype='.txt',
-                                          exclude=['store_state',
-                                                   'store_position',
-                                                   'X0','Y0',
-                                                   'ivp_method',
-                                                   'extension',
-                                                   'U'],
-                                          **kwargs)
-    
-    if os.path.isfile(fname) and False:
-        switch_times = np.loadtxt(fname)
-    
-    else:
-        t0 = time.time()
-        a.run_master()
-        t1 = time.time()
-        print('*\t Run time',t1-t0)
-        
-        skipn = 1
-        
-        switch_times = a.switch_times
-        np.savetxt(fname,switch_times)
-        
-
-        
-    if False:
-        diffs = np.diff(switch_times)
-        means = np.cumsum(diffs)/np.arange(1,len(switch_times))
-        
-        
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        
-        ax1.plot(switch_times[:-1],means)
-        ax1.plot([0,switch_times[-2]],[means[-1],means[-1]],color='gray',
-                 label='final mean value')
-        ax1.legend()
-    
-    if False:
-        fig = plt.figure()
-        ax1 = fig.add_subplot(121)
-        ax2 = fig.add_subplot(122)
-        
-        ax1.plot(a.varX)
-        ax2.plot(a.varY)
-    
-    if False:
-        print('mean FX',np.nanmean(a.FX[skipn:]))
-        print('mean FY',np.mean(a.FY[skipn:]))
-    
-        print('mean X',np.nanmean(a.X[skipn:]))
-        print('mean Y',np.mean(a.Y[skipn:]))
-        
-        print('mean V',np.mean(a.V[skipn:]))
-    
-    if False:
-        fig = plt.figure()
-        ax1 = fig.add_subplot(121)
-        ax2 = fig.add_subplot(122)
-        
-        ax1.hist(a.X,alpha=.4,bins=10,density=True)
-        ax1.hist(a.Y,alpha=.4,bins=20,density=True)
-        
-        ax2.hist(a.FX,alpha=.4,bins=10,density=True)
-        ax2.hist(a.FY,alpha=.4,bins=20,density=True)
-        
-        
-    #plt.show(block=True)
-    #plt.close()
-    
-    # will only plot with --use-storage is enabled
-    #libm.plot_traces(a)
-    #libm.plot_heatmap(a)
-    
-    if False:#not(cluster):
-        plt.show(block=True)
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
