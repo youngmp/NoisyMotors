@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
 from agents import Agents
-import parsets as pset
+import lib.parsets as pset
 
 popfactor = 1
 n0 = 100*popfactor

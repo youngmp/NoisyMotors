@@ -10,7 +10,7 @@ Figure generation code for yptgf2
 import os
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import parsets as pset
+import lib.parsets as pset
 import numpy as np
 import scipy as sp
 
