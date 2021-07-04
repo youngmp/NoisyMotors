@@ -795,7 +795,7 @@ def motor_distributions(recompute=False):
 
 
 def master_vs_agents(recompute_agents=False,
-                     recompute_master=True):
+                     recompute_master=False):
 
     #fig = plt.figure(figsize=(FIGWIDTH_PX/MY_DPI,850*5/8/MY_DPI))
     fig = plt.figure(figsize=(8,5))
@@ -895,7 +895,7 @@ def master_vs_agents(recompute_agents=False,
         #np.savetxt('Z.txt',a.Z)
 
         cut1 = 0
-        cut2 = int(len(V_master)/1.35)
+        cut2 = int(len(V_master)/2)
         counts2, bins2, bars2 = ax22.hist(V_master[cut1:cut2],bins=40,
                                           density=True,
                                           label='Density')
@@ -909,7 +909,7 @@ def master_vs_agents(recompute_agents=False,
         V_master = np.loadtxt('data/V_master_'+parset_name+'.txt')
 
         cut1 = 0
-        cut2 = int(len(V_master)/1.35)
+        cut2 = int(len(V_master)/2)
         counts2, bins2, bars2 = ax22.hist(V_master[cut1:cut2],bins=40,
                                           density=True,
                                           label='Density')
