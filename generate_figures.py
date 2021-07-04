@@ -397,7 +397,7 @@ def agent_example():
     """
     
     kwargs = {'T':1,
-              'V0':0,
+              'V0':50,
               'Z0':0,
               'dt':2e-6,
               'seed':2,
@@ -535,7 +535,7 @@ def langevin_vs_agents(recompute_agents=False,
 
     # agent simulation
     kwargs = {'T':11,
-              'V0':0,
+              'V0':50,
               'Z0':0,
               'dt':2e-6,
               'seed':9,
@@ -697,7 +697,7 @@ def motor_distributions(recompute=False):
            'dt':1e-6,
            #'T':.01,
            #'dt':1e-5,
-           'V0':0,
+           'V0':50,
            'seed':0,
            'U':None,
            'force_pos_type':'lin',
