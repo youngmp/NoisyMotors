@@ -686,9 +686,10 @@ def langevin_vs_agents(recompute_agents=False,
 
 def motor_distributions(recompute=False):
 
-    gs = gridspec.GridSpec(nrows=1,ncols=5,wspace=0,hspace=0)
+    gs = gridspec.GridSpec(nrows=1,ncols=5,
+                           wspace=0,hspace=0)
     
-    fig = plt.figure(figsize=(8,2))
+    fig = plt.figure(figsize=(8,3))
     ax11 = fig.add_subplot(gs[0,0])
     ax12 = fig.add_subplot(gs[0,2])
     ax13 = fig.add_subplot(gs[0,4])
@@ -1582,18 +1583,18 @@ def main():
     # listed in order of Figures in paper
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
-        (cylinder,[],['f_cylinder.pdf']),
-        (agent_example,[],['f_agent_example.pdf']),
+        #(cylinder,[],['f_cylinder.pdf']),
+        #(agent_example,[],['f_agent_example.pdf']),
         
-        (langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
+        #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
         (motor_distributions,[],['f_motor_distribution.pdf']),
-        (master_vs_agents,[],['f_master_vs_agents.pdf']),
+        #(master_vs_agents,[],['f_master_vs_agents.pdf']),
         
-        (mva_time,[],['f_mva_time.pdf']),
-        (velocity_mfpts,[],['f_velocity_mfpts.pdf']),
-        (switch_distributions,[],['f_switch_distributions.pdf']),
+        #(mva_time,[],['f_mva_time.pdf']),
+        #(velocity_mfpts,[],['f_velocity_mfpts.pdf']),
+        #(switch_distributions,[],['f_switch_distributions.pdf']),
         
-        (mfpt_translocation,[],['f_mfpt_translocation.pdf']),
+        #(mfpt_translocation,[],['f_mfpt_translocation.pdf']),
         
     ]
     
