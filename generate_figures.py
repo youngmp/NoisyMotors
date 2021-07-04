@@ -891,7 +891,7 @@ def master_vs_agents(recompute_agents=False,
         #np.savetxt('Z.txt',a.Z)
 
         cut1 = 0
-        cut1 = int(len(V_master)/1.35)
+        cut2 = int(len(V_master)/1.35)
         counts2, bins2, bars2 = ax22.hist(V_master[cut1:cut2],bins=40,
                                           density=True,
                                           label='Density')
