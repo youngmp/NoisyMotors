@@ -27,7 +27,7 @@ from math import log10, floor
 import lib.libMotorPDE as lib
 from Master import Master
 from agents import Agents
-import parsets as pset
+from .parsets import parset
 
 from .test_MotorPDE import fn_test
 
@@ -43,7 +43,6 @@ import matplotlib as mpl
 
 import platform
 from pathlib import Path
-
 # operating system
 sys = platform.system()
 
@@ -78,7 +77,7 @@ opt = {'T':1,
        'store_position':False,
        'ext':True}
 
-opt = dict(opt,**pset.parset('figure1'))
+opt = dict(opt,**parset('figure1'))
 
 
 def steady_state(v,update_kwargs={},return_data=False,**kwargs):

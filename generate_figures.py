@@ -25,7 +25,7 @@ import lib.libMotorPDE as lmpde
 from lib.lubrication import lubrication
 from agents import Agents
 from Master import Master
-import fit_langevin
+import lib.fit_langevin
 import lib.telegraph as telegraph
 
 import matplotlib as mpl

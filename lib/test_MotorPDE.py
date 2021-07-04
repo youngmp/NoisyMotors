@@ -5,13 +5,12 @@ import and test MotorPDE.py
 
 """
 
-from MotorPDE import MotorPDE as mpde
+from .MotorPDE import MotorPDE as mpde
 #from MotorPDE_nokink import MotorPDE as mpde
 #from MotorPDE_pref_only import MotorPDE as mpde
 from lib.interp_basic import interp_basic as interpb
 
 import lib.libMotorPDE as lib
-import parsets as pset
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,7 +39,6 @@ opt = {'U':-10, 'A0':0, 'A':5, 'B':6,
        'ivp_method':'euler','store_position':True}
 
 
-#opt = dict(opt,**pset.parset('1'))
 
 
 
