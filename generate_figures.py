@@ -854,6 +854,8 @@ def master_vs_agents(recompute_agents=False,
         counts = np.loadtxt(f_counts_agents)
         bins = np.loadtxt('data/bins_'+parset_name+'.csv')[:-1]
 
+        ax21.hist(V,bins=40,density=True)
+
     mfpt_agents = np.mean(np.diff(switch_agents))
 
     opt = {'T':5,
@@ -914,6 +916,7 @@ def master_vs_agents(recompute_agents=False,
 
         counts2 = np.loadtxt(f_counts_master)
         bins2 = np.loadtxt('data/bins_master_'+parset_name+'.csv')[:-1]
+        
 
 
     mfpt_master = np.mean(np.diff(switch_master))
@@ -931,7 +934,7 @@ def master_vs_agents(recompute_agents=False,
 
     # plot agents histogram from longer simulations
     #counts, bins, bars
-    ax21.hist(V,bins=40,density=True)
+    
 
     # get steady-state langevin and plot
     #bins = np.loadtxt('bins.csv')[:-1]
@@ -947,7 +950,7 @@ def master_vs_agents(recompute_agents=False,
                  color='tab:red',alpha=0.7,s=30)
     
 
-    #ax22.hist(V_master,bins=40,density=True)
+    
 
 
     #ax22.plot(x,fit_langevin.ps(x,sigma),color='tab:orange',
