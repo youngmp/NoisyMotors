@@ -108,7 +108,7 @@ def cylinder():
     ax11.plot_surface(X,Y,Z,alpha=.25)
     
     shifts = np.array([3,-3,0])
-    names = ['Z','Y','Z']
+    names = ['X','Y','Z']
     size = 2
     
     
@@ -1584,17 +1584,17 @@ def main():
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
         (cylinder,[],['f_cylinder.pdf']),
-        (agent_example,[],['f_agent_example.pdf']),
+        #(agent_example,[],['f_agent_example.pdf']),
         
-        (langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
-        (motor_distributions,[],['f_motor_distribution.pdf']),
-        (master_vs_agents,[],['f_master_vs_agents.pdf']),
+        #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
+        #(motor_distributions,[],['f_motor_distribution.pdf']),
+        #(master_vs_agents,[],['f_master_vs_agents.pdf']),
         
-        (mva_time,[],['f_mva_time.pdf']),
-        (velocity_mfpts,[],['f_velocity_mfpts.pdf']),
-        (switch_distributions,[],['f_switch_distributions.pdf']),
+        #(mva_time,[],['f_mva_time.pdf']),
+        #(velocity_mfpts,[],['f_velocity_mfpts.pdf']),
+        #(switch_distributions,[],['f_switch_distributions.pdf']),
         
-        (mfpt_translocation,[],['f_mfpt_translocation.pdf']),
+        #(mfpt_translocation,[],['f_mfpt_translocation.pdf']),
         
     ]
     
