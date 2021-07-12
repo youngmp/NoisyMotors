@@ -40,9 +40,14 @@ if not os.path.exists('data'):
  
 size = 15
 
-def call_separator():
+def call_separator(text=''):
     print()
     print('========================')
+    if text != '':
+        print('Generating figure', text)
+        print()
+    else:
+        print()
 
 class Arrow3D(FancyArrowPatch):
     """
@@ -70,7 +75,9 @@ def cylinder():
 
     """
 
-    call_separator()
+    call_separator('Generating cylinder')
+    print()
+    
     
     T1 = .1
     
@@ -288,7 +295,7 @@ def cylinder_sideways():
     sideways cylinder for poster
     """
 
-    call_separator()
+    call_separator('cylinder sidweays')
     
     T1 = .1
     
@@ -408,7 +415,7 @@ def agent_example():
     display velocity and position.
     """
 
-    call_separator()
+    call_separator('agent example')
     
     kwargs = {'T':1,
               'V0':50,
@@ -543,7 +550,7 @@ def run_langevin(t,switch_vel=None,kwargs={}):
 def langevin_vs_agents(recompute_agents=False,
                        recompute_lan=False):
 
-    call_separator()
+    call_separator('Langevin vs agents')
     
     fig = plt.figure(figsize=(8,5))
     ax11 = fig.add_subplot(221) # solution distribution agents
@@ -704,7 +711,7 @@ def langevin_vs_agents(recompute_agents=False,
 
 def motor_distributions(recompute=False):
 
-    call_separator()
+    call_separator('motor distributions')
     gs = gridspec.GridSpec(nrows=1,ncols=5,
                            wspace=0,hspace=0)
     
@@ -817,7 +824,7 @@ def motor_distributions(recompute=False):
 def master_vs_agents(recompute_agents=False,
                      recompute_master=False):
 
-    call_separator()
+    call_separator('master vs. agents')
     #fig = plt.figure(figsize=(FIGWIDTH_PX/MY_DPI,850*5/8/MY_DPI))
     fig = plt.figure(figsize=(8,5))
     
@@ -1058,7 +1065,7 @@ def get_times(path,options):
 
 def mva_time():
 
-    call_separator()
+    call_separator('master vs agents wall time')
     fig = plt.figure(figsize=(5,3))
     ax = fig.add_subplot(111)
 
@@ -1138,7 +1145,7 @@ def velocity_mfpts():
     quantities obtained from julia code and master equation
     """
 
-    call_separator()
+    call_separator('convergence figure for mean time to switch velocity')
     fig = plt.figure(figsize=(5,3))
     ax = fig.add_subplot(111)
     
@@ -1189,7 +1196,7 @@ def switch_distributions():
     MFPT to switch velocity
     """
 
-    call_separator()
+    call_separator('velocity-switch distribution')
     from scipy.stats import kstest
 
     # load agents MFPT
@@ -1352,7 +1359,7 @@ def mfpt_translocation(recompute=False):
     ympark1988@gmail.com
     """
 
-    call_separator()
+    call_separator('mean first passage time to translocation')
     
     
     fig = plt.figure(figsize=(8,5))
