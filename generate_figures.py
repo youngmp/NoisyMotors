@@ -40,6 +40,10 @@ if not os.path.exists('data'):
  
 size = 15
 
+def call_separator():
+    print()
+    print('========================')
+
 class Arrow3D(FancyArrowPatch):
     """
     A class for drawing arrows in 3d plots.
@@ -62,7 +66,10 @@ def cylinder():
     TODO: add small cartoon axes to subplots.
     mmake dome head for spine figure
     
+
     """
+
+    call_separator()
     
     T1 = .1
     
@@ -83,6 +90,7 @@ def cylinder():
     z = np.linspace(-7,7,100)  # dimensional
     r = a.pi1(z)
     th = np.linspace(0,2*np.pi,100)
+    
     
     radius_al = 0.25
     
@@ -277,6 +285,8 @@ def cylinder_sideways():
     """
     sideways cylinder for poster
     """
+
+    call_separator()
     
     T1 = .1
     
@@ -395,6 +405,8 @@ def agent_example():
 
     display velocity and position.
     """
+
+    call_separator()
     
     kwargs = {'T':1,
               'V0':50,
@@ -480,6 +492,8 @@ def fpDimLin(U,kwargs):
 
 
 def run_langevin(t,switch_vel=None,kwargs={}):
+
+    
     
     switch_times = []
     side = 0
@@ -527,6 +541,8 @@ def run_langevin(t,switch_vel=None,kwargs={}):
 def langevin_vs_agents(recompute_agents=False,
                        recompute_lan=False):
 
+    call_separator()
+    
     fig = plt.figure(figsize=(8,5))
     ax11 = fig.add_subplot(221) # solution distribution agents
     ax12 = fig.add_subplot(222) # solution distribution langevin
@@ -686,6 +702,7 @@ def langevin_vs_agents(recompute_agents=False,
 
 def motor_distributions(recompute=False):
 
+    call_separator()
     gs = gridspec.GridSpec(nrows=1,ncols=5,
                            wspace=0,hspace=0)
     
@@ -798,6 +815,7 @@ def motor_distributions(recompute=False):
 def master_vs_agents(recompute_agents=False,
                      recompute_master=False):
 
+    call_separator()
     #fig = plt.figure(figsize=(FIGWIDTH_PX/MY_DPI,850*5/8/MY_DPI))
     fig = plt.figure(figsize=(8,5))
     
@@ -1037,7 +1055,8 @@ def get_times(path,options):
 
 
 def mva_time():
-    
+
+    call_separator()
     fig = plt.figure(figsize=(5,3))
     ax = fig.add_subplot(111)
 
@@ -1117,6 +1136,7 @@ def velocity_mfpts():
     quantities obtained from julia code and master equation
     """
 
+    call_separator()
     fig = plt.figure(figsize=(5,3))
     ax = fig.add_subplot(111)
     
@@ -1166,7 +1186,8 @@ def switch_distributions():
     """
     MFPT to switch velocity
     """
-        
+
+    call_separator()
     from scipy.stats import kstest
 
     # load agents MFPT
@@ -1329,6 +1350,9 @@ def mfpt_translocation(recompute=False):
     ympark1988@gmail.com
     """
 
+    call_separator()
+    
+    
     fig = plt.figure(figsize=(8,5))
     ax11 = fig.add_subplot(221)
     ax12 = fig.add_subplot(222)
@@ -1435,7 +1459,7 @@ def mfpt_translocation(recompute=False):
     r_std_list = []
     r_prob_list = []
 
-    print('========================')
+    
 
     file_not_found = not(os.path.isfile(fname2))
     
@@ -1551,7 +1575,8 @@ def mfpt_translocation(recompute=False):
     ax12.set_ylim(0,8)
 
     tickpos = [0,2,4,6,8]
-    ax12.set_yticks(tickpos,tickpos)
+    ax12.set_yticks(tickpos)
+    ax12.set_yticklabels(tickpos)
 
     #plt.locator_params(axis="y", integer=True, tight=True)
 
@@ -1583,7 +1608,7 @@ def main():
     # listed in order of Figures in paper
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
-        (cylinder,[],['f_cylinder.pdf']),
+        #(cylinder,[],['f_cylinder.pdf']),
         #(agent_example,[],['f_agent_example.pdf']),
         
         #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
@@ -1594,7 +1619,7 @@ def main():
         #(velocity_mfpts,[],['f_velocity_mfpts.pdf']),
         #(switch_distributions,[],['f_switch_distributions.pdf']),
         
-        #(mfpt_translocation,[],['f_mfpt_translocation.pdf']),
+        (mfpt_translocation,[],['f_mfpt_translocation.pdf']),
         
     ]
     
