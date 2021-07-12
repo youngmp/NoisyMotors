@@ -97,7 +97,7 @@ class lubrication(object):
         self.base_radius = base_radius
         self.inner_width = inner_width
         
-        print('If you are using both dimensional and nondimensional params, nondimensional params will be used and dimensional params ignored.')
+        #print('If you are using both dimensional and nondimensional params, nondimensional params will be used and dimensional params ignored.')
         
         self.nondim_choice = nondim_choice
         self.force_pos_type = force_pos_type
@@ -161,11 +161,11 @@ class lubrication(object):
             self.pi6 = pi6
 
         if self.nondim_choice == 'with_attachment':
-            print('using old nondim system (with force attachment)')
+            #print('using old nondim system (with force attachment)')
             self.force_factor = 1
         
         elif (self.nondim_choice == 'no_attachment') or (self.nondim_choice == 'without_attachment'):
-            print('using new nondim system (without force attachment)')
+            #print('using new nondim system (without force attachment)')
             if self.force_pos_type == 'exp':
                 self.force_factor = (exp(self.pi4)-1)
             elif self.force_pos_type == 'lin':
@@ -175,7 +175,7 @@ class lubrication(object):
             raise ValueError('Unrecognized nondim_choice',self.nondim_choice) 
 
         
-        print('pi3='+str(self.pi3)+'; pi4='+str(self.pi4)+'; pi5='+str(self.pi5)+'; pi6='+str(self.pi6))
+        #print('pi3='+str(self.pi3)+'; pi4='+str(self.pi4)+'; pi5='+str(self.pi5)+'; pi6='+str(self.pi6))
         #print(C,F0,np.pi,Rp)
         self.C = C
         self.pi2 = C*self.F0/(np.pi*Rp**3) # dimensionless force
@@ -198,7 +198,7 @@ class lubrication(object):
         self.Z_scale = self.Rp # include another name for convenience. 
         self.tau0 = 6*pi*self.mu*self.Rp**2/self.F0 # puts time in seconds
         
-        print('U_scale',self.U_scale,'F0=',self.F0,'tau0=',self.tau0)
+        #print('U_scale',self.U_scale,'F0=',self.F0,'tau0=',self.tau0)
         #print("U_scale",self.U_scale,self.F0,self.Rp,self.mu)
         
         self.zeta_inf = 6*pi*self.Rp*self.mu
@@ -207,7 +207,7 @@ class lubrication(object):
 
         self.pi1_min=self.Rc/self.Rp
         #slef.pi2=
-        print('pi1*='+str(self.pi1_min)+' (minimum ratio Rc/Rp), pi2='+str(self.pi2))
+        #print('pi1*='+str(self.pi1_min)+' (minimum ratio Rc/Rp), pi2='+str(self.pi2))
 
         self.recompute_solution = recompute_solution
         self.use_old_solution = use_old_solution
@@ -877,7 +877,7 @@ class lubrication(object):
             #print(self.__dict__)
             #ax.plot(u,self.phi1*self.FAm(u) + self.phi2*self.FA(u)-self.zeta*u,lw=2)
             
-            print('type',self.force_pos_type)
+            #print('type',self.force_pos_type)
             #ax.plot(u,self.F(u)-self.ze*u,lw=2)
             #ax.plot(u,self.FA(u),lw=2)
 
@@ -994,9 +994,9 @@ def main():
     
     a.run_sim()
     elapsed = time.time()-t
-    print('total euler run time',elapsed)
+    #print('total euler run time',elapsed)
 
-    print('std',np.std(a.U*a.U_scale),'mean',np.mean(a.U*a.U_scale))
+    #print('std',np.std(a.U*a.U_scale),'mean',np.mean(a.U*a.U_scale))
     
     #a.plot('zu')
     #a.plot('Z')
