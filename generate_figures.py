@@ -54,7 +54,8 @@ class Arrow3D(FancyArrowPatch):
 
     def draw(self, renderer):
         xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        #xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
         self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
         FancyArrowPatch.draw(self, renderer)
 
@@ -108,7 +109,8 @@ def cylinder():
     #Z,TH = np.mgrid[-7:7:.1, 0:2*np.pi:.1]
     X = np.zeros_like(Z)
     Y = np.zeros_like(Z)
-    print(np.shape(Z))
+    #print(np.shape(Z))
+    
     for i in range(len(Z[:,0])):
         X[i,:] = a.pi1(Z[i,:])*np.cos(TH[i,:])
         Y[i,:] = a.pi1(Z[i,:])*np.sin(TH[i,:])
@@ -324,7 +326,7 @@ def cylinder_sideways():
     #Z,TH = np.mgrid[-7:7:.1, 0:2*np.pi:.1]
     X = np.zeros_like(Z)
     Y = np.zeros_like(Z)
-    print(np.shape(Z))
+    #print(np.shape(Z))
     for i in range(len(Z[:,0])):
         X[i,:] = a.pi1(Z[i,:])*np.cos(TH[i,:])
         Y[i,:] = a.pi1(Z[i,:])*np.sin(TH[i,:])
@@ -1608,7 +1610,7 @@ def main():
     # listed in order of Figures in paper
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
-        #(cylinder,[],['f_cylinder.pdf']),
+        (cylinder,[],['f_cylinder.pdf']),
         #(agent_example,[],['f_agent_example.pdf']),
         
         #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
@@ -1619,7 +1621,7 @@ def main():
         #(velocity_mfpts,[],['f_velocity_mfpts.pdf']),
         #(switch_distributions,[],['f_switch_distributions.pdf']),
         
-        (mfpt_translocation,[],['f_mfpt_translocation.pdf']),
+        #(mfpt_translocation,[],['f_mfpt_translocation.pdf']),
         
     ]
     
