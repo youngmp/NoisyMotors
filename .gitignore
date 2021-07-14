@@ -1,2 +1,9 @@
-
+*.pdf
+*.png
+*.py~
 *.pyc
+*.mp4
+.#*
+unshared/**
+*.csv
+*.txt
