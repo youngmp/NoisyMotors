@@ -35,6 +35,12 @@ plt.rc('text.latex', preamble=r'\usepackage{amsmath}\usepackage{siunitx}')
 FIGWIDTH_PX = 850
 MY_DPI = 96
 
+
+#aux_dir = os.path.expanduser('~')
+#print('This script will save several files to your home directory', aux_dir+'.')
+#print('If you wish to save the data elsewhere, edit the aux_dir variable.')
+#print('If you do not wish to save this data, set recompute=True in all functions.')
+
 if not os.path.exists('data'):
     os.makedirs('data')
  
@@ -547,8 +553,8 @@ def run_langevin(t,switch_vel=None,kwargs={}):
     
     return U,switch_times
 
-def langevin_vs_agents(recompute_agents=False,
-                       recompute_lan=False):
+def langevin_vs_agents(recompute_agents=True,
+                       recompute_lan=True):
 
     call_separator('Langevin vs agents')
     
@@ -709,7 +715,7 @@ def langevin_vs_agents(recompute_agents=False,
     
     return fig
 
-def motor_distributions(recompute=False):
+def motor_distributions(recompute=True):
 
     call_separator('motor distributions')
     gs = gridspec.GridSpec(nrows=1,ncols=5,
@@ -821,8 +827,8 @@ def motor_distributions(recompute=False):
     return fig
 
 
-def master_vs_agents(recompute_agents=False,
-                     recompute_master=False):
+def master_vs_agents(recompute_agents=True,
+                     recompute_master=True):
 
     call_separator('master vs. agents')
     #fig = plt.figure(figsize=(FIGWIDTH_PX/MY_DPI,850*5/8/MY_DPI))
@@ -1349,7 +1355,7 @@ def get_translocations(path,options,args=3,skipn=1):
     return translocation_data
 
 
-def mfpt_translocation(recompute=False):
+def mfpt_translocation(recompute=True):
     """
     this cluster data is only available offline.
     I saved the plot data to save space on the repository.
