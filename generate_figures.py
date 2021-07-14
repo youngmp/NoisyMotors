@@ -1211,7 +1211,9 @@ def switch_distributions():
     options = ['nX=100','dt=1.0e-07','.txt']
     diffs = False
 
-    mfpts_agents = get_mfpts(path,options,diffs)
+    #mfpts_agents = get_mfpts(path,options,diffs)
+    #np.savetxt('data/mfpts_agents.txt',mfpts_agents)
+    mfpts_agents = np.loadtxt('data/mfpts_agents.txt')
     
     # load master MFPT
     #path = "../cluster_data/p1/a"
@@ -1220,7 +1222,9 @@ def switch_distributions():
     options = ['nX=100','dt=1e-06','T=10','.txt']
     diffs = True
 
-    mfpts_master = get_mfpts(path,options,diffs)
+    #mfpts_master = get_mfpts(path,options,diffs)
+    #np.savetxt('data/mfpts_master.txt',mfpts_master)
+    mfpts_master = np.loadtxt('data/mfpts_master.txt')
 
     dist_names = ['genexpon','expon']
     full_names = ['Gen. Exp.', 'Exp.']
@@ -1355,7 +1359,7 @@ def get_translocations(path,options,args=3,skipn=1):
     return translocation_data
 
 
-def mfpt_translocation(recompute=True):
+def mfpt_translocation(recompute=False):
     """
     this cluster data is only available offline.
     I saved the plot data to save space on the repository.
@@ -1623,18 +1627,18 @@ def main():
     # listed in order of Figures in paper
     figures = [
         #(cylinder_sideways,[],['f_cylinder_sidways.png']),
-        (cylinder,[],['f_cylinder.pdf']),
-        (agent_example,[],['f_agent_example.pdf']),
+        #(cylinder,[],['f_cylinder.pdf']),
+        #(agent_example,[],['f_agent_example.pdf']),
         
-        (langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
-        (motor_distributions,[],['f_motor_distribution.pdf']),
-        (master_vs_agents,[],['f_master_vs_agents.pdf']),
+        #(langevin_vs_agents,[],['f_langevin_vs_agents.pdf']),
+        #(motor_distributions,[],['f_motor_distribution.pdf']),
+        #(master_vs_agents,[],['f_master_vs_agents.pdf']),
         
-        (mva_time,[],['f_mva_time.pdf']),
-        (velocity_mfpts,[],['f_velocity_mfpts.pdf']),
+        #(mva_time,[],['f_mva_time.pdf']),
+        #(velocity_mfpts,[],['f_velocity_mfpts.pdf']),
         (switch_distributions,[],['f_switch_distributions.pdf']),
         
-        (mfpt_translocation,[],['f_mfpt_translocation.pdf']),
+        #(mfpt_translocation,[],['f_mfpt_translocation.pdf']),
         
     ]
     
